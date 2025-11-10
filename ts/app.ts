@@ -21,11 +21,16 @@ import { MessageTypes } from "./messageTypes";
 import { Updater } from "./updater";
 
 // Set app name for all platforms (especially important for macOS menu bar)
+// Set process title first (this affects the menu bar on macOS)
+if (process && process.title) {
+    process.title = 'Bunghole';
+}
 app.name = 'Bunghole';
 if (app.setName) {
     app.setName('Bunghole');
 }
-console.log('App name set to:', app.getName());
+console.log('Process title:', process.title);
+console.log('App name:', app.getName());
 
 class Bunghole {
 

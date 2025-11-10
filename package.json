@@ -1,25 +1,89 @@
 {
-    "name": "stingray",
-    "productName": "Stingray",
+    "name": "bunghole",
+    "productName": "Bunghole",
     "version": "2.11.0",
-    "description": "Stingray Document Aligner",
+    "description": "Bunghole Document Aligner",
     "main": "js/app.js",
     "scripts": {
         "build": "tsc",
-        "start": "npm run build && electron ."
+        "start": "npm run build && electron .",
+        "pack": "npm run build && electron-builder --dir",
+        "dist": "npm run build && electron-builder",
+        "dist:mac": "npm run build && electron-builder --mac"
     },
     "author": {
-        "name": "Rodolfo M. Raya",
-        "email": "rmraya@maxprograms.com",
-        "url": "https://www.maxprograms.com"
+        "name": "Håvard Nørjordet",
+        "email": "hnorjordet@users.noreply.github.com",
+        "url": "https://github.com/hnorjordet"
     },
     "license": "EPL-1.0",
     "repository": {
         "type": "git",
-        "url": "https://github.com/rmraya/TMXEditor.git"
+        "url": "https://github.com/hnorjordet/Bunghole.git"
+    },
+    "build": {
+        "appId": "com.hnorjordet.bunghole",
+        "productName": "Bunghole",
+        "publish": {
+            "provider": "github",
+            "owner": "hnorjordet",
+            "repo": "Bunghole"
+        },
+        "mac": {
+            "category": "public.app-category.productivity",
+            "target": [
+                "zip"
+            ],
+            "hardenedRuntime": false,
+            "gatekeeperAssess": false
+        },
+        "files": [
+            "js/**/*",
+            "css/**/*",
+            "html/**/*",
+            "i18n/**/*",
+            "lib/**/*",
+            "bin/**/*",
+            "dictionaries/**/*",
+            "package.json"
+        ],
+        "extraResources": [
+            {
+                "from": "lib",
+                "to": "lib"
+            },
+            {
+                "from": "bin",
+                "to": "bin"
+            },
+            {
+                "from": "dictionaries",
+                "to": "dictionaries"
+            }
+        ],
+        "dmg": {
+            "title": "Bunghole ${version}",
+            "contents": [
+                {
+                    "x": 130,
+                    "y": 220
+                },
+                {
+                    "x": 410,
+                    "y": 220,
+                    "type": "link",
+                    "path": "/Applications"
+                }
+            ]
+        }
     },
     "devDependencies": {
+        "@types/semver": "^7.7.1",
         "electron": "^35.0.0",
+        "electron-builder": "^26.0.12",
         "typescript": "^5.8.2"
+    },
+    "dependencies": {
+        "electron-updater": "^6.6.2"
     }
 }

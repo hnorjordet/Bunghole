@@ -2,21 +2,39 @@
 @import "./neutrals.css";
 
 :root {
-	--error-color: #960303;
-	font-size: 16px;
+	--error-color: #ff453a;
+	font-size: 15px;
+
+	/* Modern macOS Dark colors */
+	--macos-bg-primary: #1e1e1e;
+	--macos-bg-secondary: #2d2d2d;
+	--macos-bg-tertiary: #3a3a3a;
+	--macos-text-primary: #f5f5f7;
+	--macos-text-secondary: #98989d;
+	--macos-accent: #0a84ff;
+	--macos-accent-hover: #409cff;
+	--macos-border: rgba(255, 255, 255, 0.1);
+	--macos-shadow: rgba(0, 0, 0, 0.5);
+	--macos-toolbar-bg: rgba(30, 30, 30, 0.8);
+	--macos-selection: rgba(10, 132, 255, 0.25);
+	--macos-hover: rgba(255, 255, 255, 0.08);
 }
 
 body {
-	background: var(--gray160);
-	color: var(--gray10);
-	fill: var(--gray10);
-	stroke: var(--gray10);
+	background: var(--macos-bg-secondary);
+	color: var(--macos-text-primary);
+	fill: var(--macos-text-primary);
+	stroke: var(--macos-text-primary);
+	font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
 }
 
 .dialogBody {
-	padding: 8px;
-	margin:0;
+	padding: 16px;
+	margin: 0;
 	overflow: hidden;
+	background: var(--macos-bg-primary);
 }
 
 .wait {
@@ -24,49 +42,58 @@ body {
 }
 
 header {
-	background: var(--ClassicBlue80);
-	color: var(--gray10);
-	border-bottom: solid 2px var(--ClassicBlue80);
+	background: var(--macos-toolbar-bg);
+	backdrop-filter: blur(20px) saturate(180%);
+	-webkit-backdrop-filter: blur(20px) saturate(180%);
+	color: var(--macos-text-primary);
+	border-bottom: 1px solid var(--macos-border);
 }
 
 a {
-	color: var(--ClassicBlue80);
+	color: var(--macos-accent);
 	cursor: pointer;
+	text-decoration: none;
+	transition: color 0.2s ease;
 }
 
 a:hover {
-	text-decoration: underline;
+	color: var(--macos-accent-hover);
+	text-decoration: none;
 }
 
 .status {
 	position: absolute;
 	top: 200px;
-	left: calc(40% - 100px);
-	width: 200px;
+	left: calc(50% - 150px);
+	width: 300px;
 	margin: auto;
-	background-color: var(--ClassicBlue90);
-	color: var(--white);
-	padding: 20px;
-	border-radius: 8px;
-	box-shadow: 0px 4px 8px var(--gray160);
+	background-color: var(--macos-bg-primary);
+	color: var(--macos-text-primary);
+	padding: 24px;
+	border-radius: 12px;
+	box-shadow: 0 8px 32px var(--macos-shadow);
+	backdrop-filter: blur(20px);
+	-webkit-backdrop-filter: blur(20px);
+	border: 1px solid var(--macos-border);
 }
 
 /* tables */
 
 table {
 	width: 100%;
-	border-collapse: collapse;
+	border-collapse: separate;
+	border-spacing: 0;
 }
 
 thead {
-	height: 26px;
-	background: var(--ClassicBlue90);
-	color: var(--gray10);
+	height: 32px;
+	background: var(--macos-bg-primary);
+	color: var(--macos-text-primary);
 }
 
 thead tr {
 	position: sticky;
-	z-index: 5;
+	z-index: 10;
 	background: inherit !important;
 	color: inherit !important;
 	border: none !important;
@@ -78,9 +105,11 @@ tbody {
 }
 
 td {
-	padding: 8px 4px;
+	padding: 12px 16px;
 	vertical-align: top;
-	font-size: medium;
+	font-size: 14px;
+	border-bottom: 1px solid var(--macos-border);
+	transition: background-color 0.15s ease;
 }
 
 td.list {
@@ -89,86 +118,117 @@ td.list {
 }
 
 td.editing {
-	background-color: var(--black) !important;
-	outline: 1px solid var(--ClassicBlue80);
+	background-color: var(--macos-bg-primary) !important;
+	outline: 2px solid var(--macos-accent);
+	outline-offset: -2px;
 }
 
 td.fixed {
 	text-align: center;
 	vertical-align: middle;
-	background-color: var(--gray190) !important;
+	background-color: var(--macos-bg-secondary) !important;
 	cursor: default !important;
+	font-weight: 500;
+	color: var(--macos-text-secondary);
 }
 
 td.initial {
-	border-right: 3px solid var(--gray160);
+	border-right: 2px solid var(--macos-border);
 }
 
 td.translated {
-	border-right: 3px solid #ff9800;
+	border-right: 2px solid #ffd60a;
 }
 
 td.reviewed {
-	border-right: 3px solid #ff9800;
+	border-right: 2px solid #ffd60a;
 }
 
 td.final {
-	border-right: 3px solid #009688;
+	border-right: 2px solid #32d74b;
+}
+
+/* Subtle row background colors based on status */
+tr.confidence-high {
+	background-color: rgba(50, 215, 75, 0.05);
+}
+
+tr.confidence-medium {
+	background-color: rgba(255, 214, 10, 0.05);
+}
+
+tr.confidence-low {
+	background-color: rgba(255, 69, 58, 0.05);
+}
+
+tr.confidence-ai-reviewed {
+	background-color: rgba(10, 132, 255, 0.05);
+}
+
+tr.confidence-manual {
+	background-color: rgba(255, 214, 10, 0.05);
 }
 
 tr.selected {
-	border-top: 2px solid var(--ClassicBlue80) !important;
-	border-bottom: 2px solid var(--ClassicBlue80) !important;
-	background-color: var(--black) !important;
+	background-color: var(--macos-selection) !important;
+}
+
+tr:hover td {
+	background-color: var(--macos-hover);
 }
 
 th {
 	position: sticky;
-	z-index: 5;
-	padding: 0px 4px;
+	z-index: 10;
+	padding: 8px 16px;
 	top: 0;
-	font-weight: 300;
-	background: var(--ClassicBlue90);
-	color: var(--white);
-	fill: var(--white);
-	stroke: var(--white);
+	font-weight: 600;
+	font-size: 13px;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	background: var(--macos-bg-primary);
+	color: var(--macos-text-secondary);
+	fill: var(--macos-text-secondary);
+	stroke: var(--macos-text-secondary);
+	border-bottom: 1px solid var(--macos-border);
 }
 
 .stripes tr {
-	border-top: 2px solid var(--gray110);
-	border-bottom: 2px solid var(--gray110);
+	border-bottom: 1px solid var(--macos-border);
 }
 
 .currentRow {
-	border-top: 2px solid var(--ClassicBlue80) !important;
-	border-bottom: 2px solid var(--ClassicBlue80) !important;
-	background-color: var(--black) !important;
+	background-color: var(--macos-selection) !important;
+	box-shadow: inset 0 0 0 2px var(--macos-accent);
 }
 
 .sourceContainer {
-	background-color: var(--gray160);
-	padding: 4px;
+	background-color: var(--macos-bg-secondary);
+	padding: 12px;
 	margin: 0;
 	width: 100%;
 	white-space: pre-wrap;
-	border-bottom: 1px solid var(--ClassicBlue80);
+	border-bottom: 1px solid var(--macos-border);
+	border-radius: 6px 6px 0 0;
 }
 
 .targetContainer {
-	background-color: var(--gray160);
-	padding: 4px;
+	background-color: var(--macos-bg-secondary);
+	padding: 12px;
 	margin: 0;
 	width: 100%;
 	white-space: pre-wrap;
-	border-bottom: 1px solid var(--gray160);
+	border-bottom: 1px solid var(--macos-border);
+	border-radius: 0 0 6px 6px;
 }
 
 .machineContainer {
-	background-color: var(--od-row-background);
-	padding: 4px;
+	background-color: var(--macos-bg-tertiary);
+	padding: 12px;
 	margin: 0;
 	width: 100%;
 	white-space: pre-wrap;
+	border-radius: 6px;
 }
 
 .fixed {
@@ -177,11 +237,11 @@ th {
 }
 
 .highlighted {
-	color: var(--gray40);
-	background-color: var(--ClassicBlue80);
-	padding-left: 2px;
-	padding-right: 2px;
-	border-radius: 2px;
+	color: var(--macos-text-primary);
+	background-color: var(--macos-accent);
+	padding: 2px 6px;
+	border-radius: 4px;
+	font-weight: 500;
 }
 
 .right {
@@ -203,13 +263,15 @@ th {
 /* inputs */
 
 input {
-	background-color: var(--gray160);
-	color: var(--gray30);
-	border: 1px solid var(--gray30);
-	height: 22px;
+	background-color: var(--macos-bg-tertiary);
+	color: var(--macos-text-primary);
+	border: 1px solid var(--macos-border);
+	height: 28px;
 	font-size: 14px;
-	padding: 2px 4px;
-	border-radius: 2px;
+	padding: 4px 10px;
+	border-radius: 6px;
+	font-family: inherit;
+	transition: all 0.2s ease;
 }
 
 .table_input {
@@ -222,68 +284,85 @@ input {
 
 input:focus {
 	outline: none !important;
-	border: 1px solid var(--ClassicBlue80);
+	border: 2px solid var(--macos-accent);
+	padding: 3px 9px;
+	box-shadow: 0 0 0 3px var(--macos-selection);
+	background-color: var(--macos-bg-secondary);
 }
 
 input:focus+label {
-	color: var(--ClassicBlue80);
+	color: var(--macos-accent);
 }
 
 input:disabled {
-	background-color: var(--gray130);
+	background-color: var(--macos-bg-primary);
+	color: var(--macos-text-secondary);
+	cursor: not-allowed;
+	opacity: 0.5;
 }
 
 input[type=number] {
 	font-size: 14px;
-	padding: 2px 4px;
+	padding: 4px 10px;
 }
 
 select {
-	background-color: var(--gray160);
-	color: var(--gray30);
-	border: 1px solid var(--gray30);
+	background-color: var(--macos-bg-tertiary);
+	color: var(--macos-text-primary);
+	border: 1px solid var(--macos-border);
 	font-size: 14px;
-	height: 28px;
-	padding: 2px 4px;
-	border-radius: 2px;
+	height: 32px;
+	padding: 4px 10px;
+	border-radius: 6px;
+	font-family: inherit;
+	cursor: pointer;
+	transition: all 0.2s ease;
 }
 
 select:focus {
 	outline: none !important;
-	border: 1px solid var(--ClassicBlue80);
+	border: 2px solid var(--macos-accent);
+	box-shadow: 0 0 0 3px var(--macos-selection);
+	background-color: var(--macos-bg-secondary);
 }
 
 option {
 	font-size: 14px;
-	background-color: var(--gray160);
-	color: var(--gray30);
+	background-color: var(--macos-bg-secondary);
+	color: var(--macos-text-primary);
+	padding: 8px;
 }
 
 button {
-	color: var(--white);
-	background: var(--ClassicBlue90);
-	border: 1px solid var(--ClassicBlue90);
-	border-radius: 4px;
-	font-size: 1em;
+	color: var(--macos-text-primary);
+	background: var(--macos-accent);
+	border: none;
+	border-radius: 8px;
+	font-size: 14px;
+	font-weight: 500;
 	text-align: center;
 	margin: 4px;
-	padding-left: 8px;
-	padding-right: 8px;
+	padding: 8px 16px;
 	white-space: nowrap;
+	cursor: pointer;
+	transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+	font-family: inherit;
 }
 
 button:focus {
 	outline: none !important;
-	background: var(--ClassicBlue100);
+	box-shadow: 0 0 0 3px var(--macos-selection);
 }
 
 button:hover {
-	background: var(--ClassicBlue100);
-	border: 1px solid var(--ClassicBlue100);
-	transition-property: all;
-	transition-duration: 0.5s;
-	transition-timing-function: cubic-bezier(0.14, 0.71, 0.38, 1);
-	transition-delay: 0s;
+	background: var(--macos-accent-hover);
+	transform: translateY(-1px);
+	box-shadow: 0 4px 12px rgba(10, 132, 255, 0.4);
+}
+
+button:active {
+	transform: translateY(0);
+	box-shadow: 0 2px 6px rgba(10, 132, 255, 0.3);
 }
 
 .row {
@@ -291,16 +370,20 @@ button:hover {
 	flex-direction: row;
 	width: 100%;
 	padding: 0;
+	gap: 8px;
 }
 
 label {
 	padding-left: 4px;
 	padding-right: 4px;
+	font-size: 14px;
+	color: var(--macos-text-primary);
 }
 
 .column {
 	display: flex;
 	flex-direction: column;
+	gap: 8px;
 }
 
 .fill_width {
@@ -316,21 +399,23 @@ label {
 }
 
 .paddedArea {
-	padding: 4px;
-	margin: 4px;
+	padding: 12px;
+	margin: 8px;
 }
 
 .optionBox {
-	border: 1px solid grey;
-	border-radius: 4px;
+	border: 1px solid var(--macos-border);
+	border-radius: 8px;
+	background: var(--macos-bg-primary);
 }
 
 .buttonArea {
 	display: flex;
 	flex-direction: row;
-	padding: 8px 16px;
+	padding: 16px;
 	justify-content: flex-end;
-	width: calc(100% - 16px);
+	width: calc(100% - 32px);
+	gap: 8px;
 }
 
 /* toolbars */
@@ -338,72 +423,88 @@ label {
 .toolbar {
 	display: flex;
 	flex-direction: row;
-	background: var(--gray130);
-	color: var(--gray10);
-	fill: var(--ClassicBlue80);
-	stroke: var(--ClassicBlue80);
-	padding: 2px 4px;
+	background: var(--macos-toolbar-bg);
+	backdrop-filter: blur(20px) saturate(180%);
+	-webkit-backdrop-filter: blur(20px) saturate(180%);
+	color: var(--macos-text-primary);
+	fill: var(--macos-text-primary);
+	stroke: var(--macos-text-primary);
+	padding: 8px 12px;
 	justify-content: flex-start;
-	vertical-align: middle;
+	align-items: center;
+	gap: 4px;
+	border-bottom: 1px solid var(--macos-border);
+	position: relative;
+	z-index: 1000;
+	overflow: visible;
 }
 
 .toolbar button {
-	padding: 4px;
-	background: inherit;
+	padding: 6px;
+	background: transparent;
 	border: none;
 	outline: none;
 	color: inherit;
 	fill: inherit;
 	stroke: inherit;
 	text-align: left;
-	font-size: 12px;
+	font-size: 13px;
 	vertical-align: middle;
+	box-shadow: none;
+	border-radius: 6px;
+	transition: background-color 0.15s ease;
+}
+
+.toolbar button:hover {
+	background-color: var(--macos-hover);
+	transform: none;
 	box-shadow: none;
 }
 
 .toolbar button img {
-	padding: 4px;
+	padding: 2px;
 }
 
 .toolbar a {
 	color: inherit;
 	fill: inherit;
 	stroke: inherit;
-	margin-left: 2px;
-	margin-right: 2px;
+	margin: 0 2px;
+	padding: 6px;
+	border-radius: 6px;
+	transition: background-color 0.15s ease;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .toolbar a img {
-	padding-top: 4px;
+	padding: 0;
 }
 
 .toolbar a svg {
-	padding-top: 4px;
-	color: var(--gray10);
-	fill: var(--gray10);
-	stroke: var(--gray10);
+	color: var(--macos-text-primary);
+	fill: var(--macos-text-primary);
+	stroke: var(--macos-text-primary);
+	transition: all 0.15s ease;
 }
 
 .toolbar a:hover {
-	background-color: var(--gray160);
+	background-color: var(--macos-hover);
 	text-decoration: none !important;
-	transition-property: all;
-	transition-duration: 0.5s;
-	transition-timing-function: cubic-bezier(0.14, 0.71, 0.38, 1);
-	transition-delay: 0s;
-	border-radius: 2px;
+	border-radius: 6px;
 }
 
 svg {
-	fill: var(--white);
-	stroke: var(--white);
+	fill: var(--macos-text-primary);
+	stroke: var(--macos-text-primary);
 	stroke-width: 0.1;
 }
 
 th svg {
-	margin-top: 4px;
-	fill: var(--gray10) !important;
-	stroke: var(--gray10) !important;
+	margin-top: 2px;
+	fill: var(--macos-text-secondary) !important;
+	stroke: var(--macos-text-secondary) !important;
 }
 
 .panel {
@@ -434,52 +535,62 @@ th svg {
 }
 
 .tooltip .tooltiptext {
-	background-color: var(--ClassicBlue100);
-	color: var(--white);
+	background-color: rgba(60, 60, 67, 0.95);
+	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
+	color: var(--macos-text-primary);
 	visibility: hidden;
-	padding: 4px;
-	border-radius: 2px;
+	padding: 6px 10px;
+	border-radius: 6px;
 	white-space: nowrap;
-	/* Position the tooltip */
+	font-size: 12px;
+	font-weight: 500;
 	position: absolute;
-	z-index: 100;
+	z-index: 10000;
+	opacity: 0;
+	transition: opacity 0.2s ease, visibility 0.2s ease;
+	border: 1px solid var(--macos-border);
 }
 
 .topTooltip {
 	bottom: 120%;
-	left: 20px;
+	left: 50%;
+	transform: translateX(-50%);
 }
 
 .bottomTooltip {
 	top: 120%;
-	left: 20px;
+	left: 0;
+	transform: none;
 }
 
 .bottomCenterTooltip {
 	top: 120%;
-	left: -80px;
+	left: 50%;
+	transform: translateX(-50%);
 }
 
 .bottomRightTooltip {
 	top: 120%;
-	right: 20px;
+	right: 0;
 }
 
 .tooltip:hover .tooltiptext {
 	visibility: visible;
+	opacity: 1;
 }
 
 .highlight {
-	color: var(--gray40);
+	color: var(--macos-accent);
 }
 
 .active svg {
-	stroke: var(--ClassicBlue70) !important;
-	fill: var(--ClassicBlue70) !important;
+	stroke: var(--macos-accent) !important;
+	fill: var(--macos-accent) !important;
 }
 
 .bordered {
-	border: 1px solid var(--gray10) !important;
+	border: 1px solid var(--macos-border) !important;
 }
 
 .error {
@@ -491,7 +602,6 @@ th svg {
 }
 
 .divContainer {
-	/* Any container that needs to scroll content */
 	width: 100%;
 	height: 100%;
 	overflow: auto;
@@ -501,57 +611,64 @@ div.stats {
 	white-space: nowrap;
 	display: flex;
 	flex-direction: row;
+	gap: 12px;
 }
 
 span.stats {
 	margin-top: 4px;
 	padding-left: 4px;
 	padding-right: 4px;
+	font-size: 13px;
 }
 
 .space {
-	background: var(--ClassicBlue50);
-	border-radius: 2px;
-	font-weight: 700;
+	background: var(--macos-selection);
+	border-radius: 3px;
+	font-weight: 600;
+	padding: 2px 4px;
 }
 
 .lighter {
-	background-color: var(--gray150);
+	background-color: var(--macos-bg-primary);
 }
 
 .paddedPanel {
-	margin-top: 8px;
-	margin-right: 8px;
-	margin-left: 8px;
-	margin-bottom: 8px;
-	border-radius: 4px;
-	width: calc(100% - 16px);
-	height: calc(100% - 16px);
+	margin: 12px;
+	border-radius: 10px;
+	width: calc(100% - 24px);
+	height: calc(100% - 24px);
 	overflow: auto;
-	background: var(--gray160);
+	background: var(--macos-bg-primary);
+	box-shadow: 0 2px 8px var(--macos-shadow);
+	border: 1px solid var(--macos-border);
 }
 
+/* Modern macOS scrollbars for dark mode */
 ::-webkit-scrollbar {
-	mix-blend-mode: darken;
-	width: 12px;
-	height: 12px;
+	width: 10px;
+	height: 10px;
+}
+
+::-webkit-scrollbar-track {
+	background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-	min-height: 30px !important;
-	background-color: var(--gray110);
-	border-radius: 6px;
+	background-color: rgba(255, 255, 255, 0.2);
+	border-radius: 5px;
+	border: 2px solid transparent;
+	background-clip: padding-box;
+	transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background-color: rgba(255, 255, 255, 0.3);
 }
 
 ::-webkit-scrollbar-corner {
-	background-color: inherit;
-	border-radius: inherit;
+	background-color: transparent;
 }
 
 ::-webkit-scrollbar-button {
-	border-radius: inherit;
-}
-
-::-webkit-scrollbar-button {
-	border-radius: inherit;
+	display: none;
 }

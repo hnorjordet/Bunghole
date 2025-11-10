@@ -1,0 +1,436 @@
+/*******************************************************************************
+ * Copyright (c) 2008 - 2025 Håvard Nørjordet.
+ *
+ * This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License 1.0
+ * which accompanies this distribution, and is available at
+ * https://www.eclipse.org/org/documents/epl-v10.html
+ *
+ * Contributors:
+ *     Håvard Nørjordet - initial API and implementation
+ *******************************************************************************/
+
+package com.maxprograms.bunghole;
+
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
+import java.text.MessageFormat;
+import java.util.Locale;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.xml.sax.SAXException;
+
+import com.maxprograms.languages.LanguageUtils;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
+
+public class BungholeServer implements HttpHandler {
+
+	private static Logger logger = System.getLogger(BungholeServer.class.getName());
+	private HttpServer server;
+	private AlignmentService service;
+
+	public static void main(String[] args) {
+		String port = "8040";
+		for (int i = 0; i < args.length; i++) {
+			String arg = args[i];			
+			if (arg.equals("-port") && (i + 1) < args.length) {
+				port = args[i + 1];
+			}
+			if (arg.equals("-lang") && (i + 1) < args.length) {
+				String lang = args[i + 1];
+				try {
+					if (LanguageUtils.getLanguage(lang) != null) {
+						Locale locale = Locale.forLanguageTag(lang);
+						Locale.setDefault(locale);
+					}
+				} catch (IOException | SAXException | ParserConfigurationException e) {
+					logger.log(Level.WARNING, e);
+				}
+			}
+		}
+		try {
+			BungholeServer instance = new BungholeServer(Integer.valueOf(port));
+			instance.run();
+		} catch (Exception e) {
+			logger.log(Level.ERROR, Messages.getString("BungholeServer.1"), e);
+		}
+	}
+
+	public BungholeServer(Integer port) throws IOException {
+		// Bind to localhost only for security - prevents network exposure
+		server = HttpServer.create(new InetSocketAddress("127.0.0.1", port), 0);
+		server.createContext("/", this);
+		server.setExecutor(new ThreadPoolExecutor(3, 10, 20, TimeUnit.SECONDS, new ArrayBlockingQueue<>(100)));
+		service = new AlignmentService();
+	}
+
+	@Override
+	public void handle(HttpExchange exchange) throws IOException {
+		try {
+			String request = "";
+			String url = exchange.getRequestURI().toString();
+			try (InputStream is = exchange.getRequestBody()) {
+				request = readRequestBody(is);
+			}
+			String response = "{}";
+			switch (url) {
+				case "/stop":
+					logger.log(Level.INFO, Messages.getString("BungholeServer.2"));
+					response = stop();
+					break;
+				case "/getLanguages":
+					response = getLanguages();
+					break;
+				case "/getTypes":
+					response = getTypes();
+					break;
+				case "/getCharsets":
+					response = getCharsets();
+					break;
+				case "/getFileType":
+					response = getFileType(new JSONObject(request));
+					break;
+				case "/alignFiles":
+					response = alignFiles(new JSONObject(request));
+					break;
+				case "/alignmentStatus":
+					response = alignmentStatus();
+					break;
+				case "/openFile":
+					response = openFile(new JSONObject(request));
+					break;
+				case "/loadingStatus":
+					response = loadingStatus();
+					break;
+				case "/getFileInfo":
+					response = getFileInfo();
+					break;
+				case "/getRows":
+					response = getRows(new JSONObject(request));
+					break;
+				case "/exportTMX":
+					response = exportTMX(new JSONObject(request));
+					break;
+				case "/exportCSV":
+					response = exportCSV(new JSONObject(request));
+					break;
+				case "/exportExcel":
+					response = exportExcel(new JSONObject(request));
+					break;
+				case "/saveFile":
+					response = saveFile();
+					break;
+				case "/renameFile":
+					response = renameFile(new JSONObject(request));
+					break;
+				case "/savingStatus":
+					response = savingStatus();
+					break;
+				case "/segmentDown":
+					response = segmentDown(new JSONObject(request));
+					break;
+				case "/segmentUp":
+					response = segmentUp(new JSONObject(request));
+					break;
+				case "/mergeNext":
+					response = mergeNext(new JSONObject(request));
+					break;
+				case "/saveData":
+					response = saveData(new JSONObject(request));
+					break;
+				case "/splitSegment":
+					response = splitSegment(new JSONObject(request));
+					break;
+				case "/replaceText":
+					response = replaceText(new JSONObject(request));
+					break;
+				case "/removeSegment":
+					response = removeSegment(new JSONObject(request));
+					break;
+				case "/removeTags":
+					response = removeTags();
+					break;
+				case "/removeDuplicates":
+					response = removeDuplicates();
+					break;
+				case "/setLanguages":
+					response = setLanguages(new JSONObject(request));
+					break;
+				case "/closeFile":
+					response = closeFile();
+					break;
+				case "/systemInfo":
+					response = getSystemInformation();
+					break;
+				// NEW: AI-enhanced alignment endpoints
+				case "/estimateAICost":
+					response = estimateAICost();
+					break;
+				case "/improveWithAI":
+					response = improveWithAI();
+					break;
+				case "/getAlignmentStats":
+					response = getAlignmentStats();
+					break;
+				case "/toggleManualMark":
+					response = toggleManualMark(new JSONObject(request));
+					break;
+				case "/moveTargetUp":
+					response = moveTargetUp(new JSONObject(request));
+					break;
+				case "/moveTargetDown":
+					response = moveTargetDown(new JSONObject(request));
+					break;
+				case "/testClaudeConnection":
+					response = testClaudeConnection();
+					break;
+				case "/setClaudeAPIKey":
+					response = setClaudeAPIKey(new JSONObject(request));
+					break;
+				default:
+					JSONObject unknown = new JSONObject();
+					unknown.put(Constants.STATUS, Constants.ERROR);
+					unknown.put(Constants.REASON, Messages.getString("BungholeServer.3"));
+					unknown.put("received", url);
+					response = unknown.toString();
+			}
+			exchange.getResponseHeaders().add("content-type", "application/json; charset=utf-8");
+			byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
+			exchange.sendResponseHeaders(200, bytes.length);
+			try (ByteArrayInputStream stream = new ByteArrayInputStream(bytes)) {
+				try (OutputStream os = exchange.getResponseBody()) {
+					byte[] array = new byte[2048];
+					int read;
+					while ((read = stream.read(array)) != -1) {
+						os.write(array, 0, read);
+					}
+				}
+			}
+		} catch (IOException | JSONException | SAXException | ParserConfigurationException e) {
+			logger.log(Level.ERROR, e);
+			String message = e.getMessage();
+			exchange.sendResponseHeaders(500, message.length());
+			try (OutputStream os = exchange.getResponseBody()) {
+				os.write(message.getBytes());
+			}
+		}
+	}
+
+	private void run() {
+		server.start();
+		logger.log(Level.INFO, Messages.getString("BungholeServer.4"));
+	}
+
+	protected static String readRequestBody(InputStream is) throws IOException {
+		StringBuilder request = new StringBuilder();
+		try (BufferedReader rd = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+			String line;
+			while ((line = rd.readLine()) != null) {
+				request.append(line);
+			}
+		}
+		return request.toString();
+	}
+
+	private String getLanguages() {
+		return service.getLanguages().toString();
+	}
+
+	private String getTypes() {
+		return service.getTypes().toString();
+	}
+
+	private String getCharsets() {
+		return service.getCharsets().toString();
+	}
+
+	private String alignFiles(JSONObject json) {
+		return service.alignFiles(json).toString();
+	}
+
+	private String alignmentStatus() {
+		return service.alignmentStatus().toString();
+	}
+
+	private String openFile(JSONObject json) {
+		return service.openFile(json).toString();
+	}
+
+	private String loadingStatus() {
+		return service.loadingStatus().toString();
+	}
+
+	private String getFileInfo() throws JSONException, SAXException, IOException, ParserConfigurationException {
+		return service.getFileInfo().toString();
+	}
+
+	private String getRows(JSONObject json) throws SAXException, IOException, ParserConfigurationException {
+		return service.getRows(json).toString();
+	}
+
+	private String exportTMX(JSONObject json) {
+		return service.exportTMX(json).toString();
+	}
+
+	private String saveFile() {
+		return service.saveFile().toString();
+	}
+
+	private String renameFile(JSONObject json) {
+		return service.renameFile(json).toString();
+	}
+
+	private String exportCSV(JSONObject json) {
+		return service.exportCSV(json).toString();
+	}
+
+	private String exportExcel(JSONObject json) {
+		return service.exportExcel(json).toString();
+	}
+
+	private String removeTags() {
+		return service.removeTags().toString();
+	}
+
+	private String removeDuplicates() {
+		return service.removeDuplicates().toString();
+	}
+
+	private String getFileType(JSONObject json) {
+		return service.getFileType(json.getString("file")).toString();
+	}
+
+	private String setLanguages(JSONObject json) {
+		return service.setLanguages(json).toString();
+	}
+
+	private String savingStatus() {
+		return service.savingStatus().toString();
+	}
+
+	private String closeFile() {
+		return service.closeFile().toString();
+	}
+
+	private String segmentDown(JSONObject json) {
+		return service.segmentDown(json).toString();
+	}
+
+	private String segmentUp(JSONObject json) {
+		return service.segmentUp(json).toString();
+	}
+
+	private String mergeNext(JSONObject json) {
+		return service.mergeNext(json).toString();
+	}
+
+	private String removeSegment(JSONObject json) {
+		return service.removeSegment(json).toString();
+	}
+
+	private String saveData(JSONObject json) {
+		return service.saveData(json).toString();
+	}
+
+	private String splitSegment(JSONObject json) {
+		return service.splitSegment(json).toString();
+	}
+
+	private String replaceText(JSONObject json) {
+		return service.replaceText(json).toString();
+	}
+
+	private static String getSystemInformation() {
+		JSONObject result = new JSONObject();
+		MessageFormat mf = new MessageFormat(Messages.getString("BungholeServer.5"));
+		result.put("bunghole", mf.format(new String[] { Constants.VERSION, Constants.BUILD }));
+		result.put("openxliff", mf.format(new String[] { com.maxprograms.converters.Constants.VERSION,
+				com.maxprograms.converters.Constants.BUILD }));
+		result.put("xmljava",
+				mf.format(new String[] { com.maxprograms.xml.Constants.VERSION, com.maxprograms.xml.Constants.BUILD }));
+		mf = new MessageFormat(Messages.getString("BungholeServer.6"));
+		result.put("java",
+				mf.format(new String[] { System.getProperty("java.version"), System.getProperty("java.vendor") }));
+		result.put(Constants.STATUS, Constants.SUCCESS);
+		return result.toString();
+	}
+
+	private String stop() {
+		logger.log(Level.INFO, Messages.getString("BungholeServer.9"));
+		JSONObject result = new JSONObject();
+		JSONObject status = service.savingStatus();
+		while (status.getBoolean("saving")) {
+			try {
+				Thread.sleep(500);
+				status = service.savingStatus();
+			} catch (InterruptedException e) {
+				logger.log(Level.ERROR, e);
+				result.put(Constants.STATUS, Constants.ERROR);
+				result.put(Constants.REASON, e.getMessage());
+			}
+		}
+		if (!result.has("reason")) {
+			result.put(Constants.STATUS, Constants.SUCCESS);
+		}
+		return result.toString();
+	}
+
+	// ==================== NEW: AI-ENHANCED ALIGNMENT ENDPOINTS ====================
+
+	private String estimateAICost() {
+		return service.estimateAICost().toString();
+	}
+
+	private String improveWithAI() {
+		return service.improveAlignmentWithAI().toString();
+	}
+
+	private String getAlignmentStats() {
+		return service.getAlignmentStats().toString();
+	}
+
+	private String testClaudeConnection() {
+		return service.testClaudeConnection().toString();
+	}
+
+	private String setClaudeAPIKey(JSONObject json) {
+		JSONObject result = new JSONObject();
+		try {
+			String apiKey = json.getString("apiKey");
+			service.setClaudeAPIKey(apiKey);
+			result.put(Constants.STATUS, Constants.SUCCESS);
+		} catch (JSONException e) {
+			result.put(Constants.STATUS, Constants.ERROR);
+			result.put(Constants.REASON, e.getMessage());
+		}
+		return result.toString();
+	}
+
+	private String toggleManualMark(JSONObject json) {
+		return service.toggleManualMark(json).toString();
+	}
+
+	private String moveTargetUp(JSONObject json) {
+		return service.moveTargetUp(json).toString();
+	}
+
+	private String moveTargetDown(JSONObject json) {
+		return service.moveTargetDown(json).toString();
+	}
+}

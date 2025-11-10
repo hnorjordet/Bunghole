@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008 - 2025 Maxprograms.
+ * Copyright (c) 2008 - 2025 Håvard Nørjordet.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 1.0
@@ -7,7 +7,7 @@
  * https://www.eclipse.org/org/documents/epl-v10.html
  *
  * Contributors:
- *     Maxprograms - initial API and implementation
+ *     Håvard Nørjordet - initial API and implementation
  *******************************************************************************/
 
 class SystemInformation {
@@ -32,7 +32,7 @@ class SystemInformation {
     }
 
     setInfo(info: any) {
-        document.getElementById('stingray').innerText = info.stingray;
+        document.getElementById('bunghole').innerText = info.bunghole;
         document.getElementById('openxliff').innerText = info.openxliff;
         document.getElementById('xmljava').innerText = info.xmljava;
         document.getElementById('java').innerText = info.java;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008 - 2025 Maxprograms.
+ * Copyright (c) 2008 - 2025 Håvard Nørjordet.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 1.0
@@ -7,7 +7,7 @@
  * https://www.eclipse.org/org/documents/epl-v10.html
  *
  * Contributors:
- *     Maxprograms - initial API and implementation
+ *     Håvard Nørjordet - initial API and implementation
  *******************************************************************************/
 
 import { ChildProcessWithoutNullStreams, execFileSync, spawn } from "child_process";
@@ -18,8 +18,9 @@ import { ClientRequest, request } from "http";
 import { I18n } from "./i18n";
 import { Locations, Point } from "./locations";
 import { MessageTypes } from "./messageTypes";
+import { Updater } from "./updater";
 
-class Stingray {
+class Bunghole {
 
     static path = require('path');
 
@@ -33,6 +34,7 @@ class Stingray {
     static replaceTextWindow: BrowserWindow;
     static updatesWindow: BrowserWindow;
     static systemInfoWindow: BrowserWindow;
+    static aiCostWindow: BrowserWindow;
 
     static alignmentStatus: any = { aligning: false, alignError: '', status: '' };
     static loadingStatus: any = { loading: false, loadError: '', status: '' };
@@ -43,7 +45,7 @@ class Stingray {
     static locations: Locations;
     currentDefaults: Rectangle;
 
-    javapath: string = Stingray.path.join(app.getAppPath(), 'bin', 'java');
+    javapath: string = Bunghole.path.join(app.getAppPath(), 'bin', 'java');
     ls: ChildProcessWithoutNullStreams;
 
     static currentFile: string;
@@ -67,33 +69,33 @@ class Stingray {
         if (!app.requestSingleInstanceLock()) {
             app.quit();
         } else {
-            if (Stingray.mainWindow) {
+            if (Bunghole.mainWindow) {
                 // Someone tried to run a second instance, we should focus our window.
-                if (Stingray.mainWindow.isMinimized()) {
-                    Stingray.mainWindow.restore();
+                if (Bunghole.mainWindow.isMinimized()) {
+                    Bunghole.mainWindow.restore();
                 }
-                Stingray.mainWindow.focus();
+                Bunghole.mainWindow.focus();
             }
         }
         if (process.platform === 'win32' && args.length > 1 && args[1] !== '.') {
-            Stingray.argFile = ''
+            Bunghole.argFile = ''
             for (let i = 1; i < args.length; i++) {
                 if (args[i] !== '.') {
-                    if (Stingray.argFile !== '') {
-                        Stingray.argFile = Stingray.argFile + ' ';
+                    if (Bunghole.argFile !== '') {
+                        Bunghole.argFile = Bunghole.argFile + ' ';
                     }
-                    Stingray.argFile = Stingray.argFile + args[i];
+                    Bunghole.argFile = Bunghole.argFile + args[i];
                 }
             }
         }
         if (process.platform === 'win32') {
-            this.javapath = Stingray.path.join(app.getAppPath(), 'bin', 'java.exe');
+            this.javapath = Bunghole.path.join(app.getAppPath(), 'bin', 'java.exe');
         }
         this.loadDefaults();
-        Stingray.loadPreferences();
-        Stingray.i18n = new I18n(Stingray.path.join(app.getAppPath(), 'i18n', 'stingray_' + Stingray.appLang + '.json'));
+        Bunghole.loadPreferences();
+        Bunghole.i18n = new I18n(Bunghole.path.join(app.getAppPath(), 'i18n', 'bunghole_' + Bunghole.appLang + '.json'));
 
-        this.ls = spawn(this.javapath, ['--module-path', 'lib', '-m', 'stingray/com.maxprograms.stingray.StingrayServer', '-port', '8040', '-lang', Stingray.appLang], { cwd: app.getAppPath(), windowsHide: true });
+        this.ls = spawn(this.javapath, ['--module-path', 'lib', '-m', 'bunghole/com.maxprograms.bunghole.BungholeServer', '-port', '8040', '-lang', Bunghole.appLang], { cwd: app.getAppPath(), windowsHide: true });
         if (!app.isPackaged) {
             this.ls.stdout.on('data', (data: Buffer | string) => {
                 console.log(data instanceof Buffer ? data.toString() : data);
@@ -102,81 +104,81 @@ class Stingray {
                 console.error(data instanceof Buffer ? data.toString() : data);
             });
         }
-        execFileSync(this.javapath, ['--module-path', 'lib', '-m', 'stingray/com.maxprograms.stingray.CheckURL', 'http://localhost:8040/'], { cwd: app.getAppPath(), windowsHide: true });
+        execFileSync(this.javapath, ['--module-path', 'lib', '-m', 'bunghole/com.maxprograms.bunghole.CheckURL', 'http://localhost:8040/'], { cwd: app.getAppPath(), windowsHide: true });
 
-        Stingray.locations = new Locations(Stingray.path.join(app.getPath('appData'), app.name, 'locations.json'));
+        Bunghole.locations = new Locations(Bunghole.path.join(app.getPath('appData'), app.name, 'locations.json'));
         app.on('ready', () => {
-            Stingray.currentFile = '';
+            Bunghole.currentFile = '';
             this.createWindow();
-            let filePath = Stingray.path.join(app.getAppPath(), 'html', Stingray.appLang, 'index.html');
+            let filePath = Bunghole.path.join(app.getAppPath(), 'html', Bunghole.appLang, 'index.html');
             let fileUrl: URL = new URL('file://' + filePath);
-            Stingray.mainWindow.loadURL(fileUrl.href);
-            Stingray.mainWindow.on('resize', () => {
+            Bunghole.mainWindow.loadURL(fileUrl.href);
+            Bunghole.mainWindow.on('resize', () => {
                 this.saveDefaults();
             });
-            Stingray.mainWindow.on('move', () => {
+            Bunghole.mainWindow.on('move', () => {
                 this.saveDefaults();
             });
-            Stingray.mainWindow.once('ready-to-show', () => {
-                Stingray.isReady = true;
-                Stingray.mainWindow.setBounds(this.currentDefaults);
-                Stingray.setLocation(Stingray.mainWindow, 'index.html');
-                Stingray.mainWindow.show();
-                Stingray.checkUpdates(true);
-                Stingray.mainLoaded();
+            Bunghole.mainWindow.once('ready-to-show', () => {
+                Bunghole.isReady = true;
+                Bunghole.mainWindow.setBounds(this.currentDefaults);
+                Bunghole.setLocation(Bunghole.mainWindow, 'index.html');
+                Bunghole.mainWindow.show();
+                Bunghole.checkUpdates(true);
+                Bunghole.mainLoaded();
                 if (process.platform === 'darwin' && app.runningUnderARM64Translation) {
-                    dialog.showMessageBoxSync(Stingray.mainWindow, {
+                    dialog.showMessageBoxSync(Bunghole.mainWindow, {
                         type: MessageTypes.warning,
-                        message: Stingray.i18n.getString('Stingray', 'arm64')
+                        message: Bunghole.i18n.getString('Bunghole', 'arm64')
                     });
                 }
             });
-            Stingray.mainWindow.on('close', (ev) => {
-                if (!Stingray.saved) {
-                    Stingray.shouldQuit = true;
-                    Stingray.closeFile();
+            Bunghole.mainWindow.on('close', (ev) => {
+                if (!Bunghole.saved) {
+                    Bunghole.shouldQuit = true;
+                    Bunghole.closeFile();
                     ev.preventDefault();
                 }
             });
         });
 
         app.on('before-quit', (ev) => {
-            if (!Stingray.saved) {
+            if (!Bunghole.saved) {
                 ev.preventDefault();
-                Stingray.shouldQuit = true;
-                Stingray.closeFile();
+                Bunghole.shouldQuit = true;
+                Bunghole.closeFile();
             }
         });
         app.on('will-quit', (ev) => {
-            if (!Stingray.saved) {
+            if (!Bunghole.saved) {
                 ev.preventDefault();
-                Stingray.shouldQuit = true;
-                Stingray.closeFile();
+                Bunghole.shouldQuit = true;
+                Bunghole.closeFile();
             }
         });
         app.on('open-file', (event, filePath) => {
             event.preventDefault();
-            if (Stingray.isReady) {
-                Stingray.openFile(filePath);
+            if (Bunghole.isReady) {
+                Bunghole.openFile(filePath);
             } else {
-                Stingray.argFile = filePath;
+                Bunghole.argFile = filePath;
             }
         });
         app.on('quit', (ev) => {
-            if (!Stingray.saved) {
+            if (!Bunghole.saved) {
                 ev.preventDefault();
-                Stingray.shouldQuit = true;
-                Stingray.closeFile();
+                Bunghole.shouldQuit = true;
+                Bunghole.closeFile();
                 return;
             }
             this.stopServer();
         });
 
         app.on('will-quit', (ev: Event) => {
-            if (!Stingray.saved) {
+            if (!Bunghole.saved) {
                 ev.preventDefault();
-                Stingray.shouldQuit = true;
-                Stingray.closeFile();
+                Bunghole.shouldQuit = true;
+                Bunghole.closeFile();
                 return;
             }
             this.stopServer();
@@ -184,23 +186,23 @@ class Stingray {
         });
 
         nativeTheme.on('updated', () => {
-            Stingray.loadPreferences();
-            Stingray.setTheme();
+            Bunghole.loadPreferences();
+            Bunghole.setTheme();
         });
         ipcMain.on('get-theme', (event: IpcMainEvent) => {
-            event.sender.send('set-theme', Stingray.currentTheme);
+            event.sender.send('set-theme', Bunghole.currentTheme);
         });
         ipcMain.on('set-height', (event: IpcMainEvent, arg: { window: string, width: number, height: number }) => {
-            Stingray.setHeight(arg);
+            Bunghole.setHeight(arg);
         });
         ipcMain.on('get-version', (event: IpcMainEvent) => {
             event.sender.send('set-version', app.name + ' ' + app.getVersion());
         });
         ipcMain.on('replace-text', () => {
-            Stingray.replaceText();
+            Bunghole.replaceText();
         })
         ipcMain.on('replace-request', (event: IpcMainEvent, arg: any) => {
-            Stingray.replace(arg);
+            Bunghole.replace(arg);
         });
         ipcMain.on('browse-srx', (event: IpcMainEvent) => {
             this.browseSRX(event);
@@ -218,36 +220,36 @@ class Stingray {
             this.browseTarget(event);
         });
         ipcMain.on('save-preferences', (event: IpcMainEvent, arg: Preferences) => {
-            Stingray.settingsWindow.close();
-            Stingray.currentPreferences = arg;
-            Stingray.savePreferences();
+            Bunghole.settingsWindow.close();
+            Bunghole.currentPreferences = arg;
+            Bunghole.savePreferences();
         });
         ipcMain.on('get-preferences', (event: IpcMainEvent) => {
-            event.sender.send('set-preferences', Stingray.currentPreferences);
+            event.sender.send('set-preferences', Bunghole.currentPreferences);
         });
         ipcMain.on('system-info-clicked', () => {
-            Stingray.showSystemInfo();
+            Bunghole.showSystemInfo();
         });
         ipcMain.on('close-systemInfo', () => {
-            Stingray.systemInfoWindow.close();
+            Bunghole.systemInfoWindow.close();
         });
         ipcMain.on('get-system-info', (event: IpcMainEvent) => {
-            Stingray.getSystemInformation(event);
+            Bunghole.getSystemInformation(event);
         });
         ipcMain.on('licenses-clicked', () => {
-            Stingray.showLicenses('about');
+            Bunghole.showLicenses('about');
         });
         ipcMain.on('open-license', (event: IpcMainEvent, arg: any) => {
-            Stingray.openLicense(arg.type);
+            Bunghole.openLicense(arg.type);
         })
         ipcMain.on('show-help', () => {
-            Stingray.showHelp();
+            Bunghole.showHelp();
         });
         ipcMain.on('get-languages', (event: IpcMainEvent) => {
             this.getLanguages(event);
         });
         ipcMain.on('get-appLanguage', (event: IpcMainEvent) => {
-            event.sender.send('set-appLanguage', Stingray.appLang);
+            event.sender.send('set-appLanguage', Bunghole.appLang);
         });
         ipcMain.on('get-types', (event: IpcMainEvent) => {
             this.getTypes(event);
@@ -256,94 +258,119 @@ class Stingray {
             this.getCharsets(event);
         });
         ipcMain.on('new-file', () => {
-            Stingray.newFile();
+            Bunghole.newFile();
         });
         ipcMain.on('open-file', () => {
-            Stingray.openFileDialog();
+            Bunghole.openFileDialog();
         });
         ipcMain.on('save-file', () => {
-            Stingray.saveFile();
+            Bunghole.saveFile();
         });
         ipcMain.on('export-tmx', () => {
-            Stingray.exportTMX();
+            Bunghole.exportTMX();
         });
         ipcMain.on('export-csv', () => {
-            Stingray.exportCSV();
+            Bunghole.exportCSV();
         });
         ipcMain.on('export-excel', () => {
-            Stingray.exportExcel();
+            Bunghole.exportExcel();
         });
         ipcMain.on('remove-tags', () => {
-            Stingray.removeTags();
+            Bunghole.removeTags();
         });
         ipcMain.on('remove-duplicates', () => {
-            Stingray.removeDuplicates();
+            Bunghole.removeDuplicates();
         });
         ipcMain.on('change-languages', () => {
-            Stingray.changeLanguages();
+            Bunghole.changeLanguages();
         });
         ipcMain.on('create-alignment', (event: IpcMainEvent, arg: any) => {
-            Stingray.createAlignment(arg);
+            Bunghole.createAlignment(arg);
         });
         ipcMain.on('get-rows', (event: IpcMainEvent, arg: any) => {
-            Stingray.getRows(arg);
+            Bunghole.getRows(arg);
         });
         ipcMain.on('file-languages', (event: IpcMainEvent) => {
-            event.sender.send('language-pair', { srcLang: Stingray.srcLang, tgtLang: Stingray.tgtLang });
+            event.sender.send('language-pair', { srcLang: Bunghole.srcLang, tgtLang: Bunghole.tgtLang });
         });
         ipcMain.on('save-languages', (event: IpcMainEvent, arg: any) => {
-            Stingray.setLanguages(arg);
+            Bunghole.setLanguages(arg);
         });
         ipcMain.on('save-data', (event: IpcMainEvent, arg: any) => {
-            Stingray.saveData(arg);
+            Bunghole.saveData(arg);
         });
         ipcMain.on('split-data', (event: IpcMainEvent, arg: any) => {
-            Stingray.split(arg);
+            Bunghole.split(arg);
         });
         ipcMain.on('segment-down', (event: IpcMainEvent, arg: any) => {
-            Stingray.segmentDown(arg);
+            Bunghole.segmentDown(arg);
         });
         ipcMain.on('segment-up', (event: IpcMainEvent, arg: any) => {
-            Stingray.segmentUp(arg);
+            Bunghole.segmentUp(arg);
         });
         ipcMain.on('merge-next', (event: IpcMainEvent, arg: any) => {
-            Stingray.mergeNext(arg);
+            Bunghole.mergeNext(arg);
         });
         ipcMain.on('remove-data', (event: IpcMainEvent, arg: any) => {
-            Stingray.removeData(arg);
+            Bunghole.removeData(arg);
         });
         ipcMain.on('close-about', () => {
-            Stingray.aboutWindow.close();
+            Bunghole.aboutWindow.close();
         });
         ipcMain.on('close-change=languages', () => {
-            Stingray.changeLanguagesWindow.close();
+            Bunghole.changeLanguagesWindow.close();
         });
         ipcMain.on('close-licenses', () => {
-            Stingray.licensesWindow.close();
+            Bunghole.licensesWindow.close();
         });
         ipcMain.on('close-messages', () => {
-            Stingray.messagesWindow.close();
+            Bunghole.messagesWindow.close();
         });
         ipcMain.on('close-new-file', () => {
-            Stingray.newFileWindow.close();
+            Bunghole.newFileWindow.close();
+        });
+        // AI Review handlers
+        ipcMain.on('ai-review', () => {
+            Bunghole.showAICostDialog();
+        });
+        ipcMain.on('estimate-ai-cost', (event: IpcMainEvent) => {
+            Bunghole.estimateAICost(event);
+        });
+        ipcMain.on('proceed-with-ai', () => {
+            Bunghole.proceedWithAI();
+        });
+        ipcMain.on('close-ai-cost-dialog', () => {
+            if (Bunghole.aiCostWindow) {
+                Bunghole.aiCostWindow.close();
+            }
+        });
+        // Segment quality management handlers
+        ipcMain.on('toggle-manual-mark', (event: IpcMainEvent, arg: any) => {
+            Bunghole.toggleManualMark(arg);
+        });
+        ipcMain.on('move-target-up', (event: IpcMainEvent, arg: any) => {
+            Bunghole.moveTargetSegment(arg, 'up');
+        });
+        ipcMain.on('move-target-down', (event: IpcMainEvent, arg: any) => {
+            Bunghole.moveTargetSegment(arg, 'down');
         });
         ipcMain.on('close-preferences', () => {
-            Stingray.settingsWindow.close();
+            Bunghole.settingsWindow.close();
         });
         ipcMain.on('close-search-replace', () => {
-            Stingray.replaceTextWindow.close();
+            Bunghole.replaceTextWindow.close();
         });
         ipcMain.on('get-versions', (event: IpcMainEvent) => {
-            event.sender.send('set-versions', { current: app.getVersion(), latest: Stingray.latestVersion });
+            event.sender.send('set-versions', { current: app.getVersion(), latest: Bunghole.latestVersion });
         });
         ipcMain.on('close-updates', () => {
-            Stingray.updatesWindow.close();
+            Bunghole.updatesWindow.close();
         });
         ipcMain.on('release-history', () => {
-            Stingray.showReleaseHistory();
+            Bunghole.showReleaseHistory();
         });
         ipcMain.on('download-latest', () => {
-            Stingray.downloadLatest();
+            Bunghole.downloadLatest();
         });
     }
 
@@ -357,7 +384,7 @@ class Stingray {
                 if (parent) {
                     parent.focus();
                 } else {
-                    Stingray.mainWindow.focus();
+                    Bunghole.mainWindow.focus();
                 }
             } catch (e) {
                 console.log(e);
@@ -403,17 +430,17 @@ class Stingray {
     }
 
     static mainLoaded(): void {
-        if (Stingray.argFile !== '') {
+        if (Bunghole.argFile !== '') {
             setTimeout(() => {
-                Stingray.openFile(Stingray.argFile);
-                Stingray.argFile = '';
+                Bunghole.openFile(Bunghole.argFile);
+                Bunghole.argFile = '';
             }, 2000);
 
         }
     }
 
     createWindow(): void {
-        Stingray.mainWindow = new BrowserWindow({
+        Bunghole.mainWindow = new BrowserWindow({
             title: app.name,
             width: this.currentDefaults.width,
             height: this.currentDefaults.height,
@@ -426,122 +453,122 @@ class Stingray {
                 contextIsolation: false
             },
             show: false,
-            icon: Stingray.path.join(app.getAppPath(), 'icons', 'icon.png')
+            icon: Bunghole.path.join(app.getAppPath(), 'icons', 'icon.png')
         });
         let fileMenu: Menu = Menu.buildFromTemplate([
-            { label: Stingray.i18n.getString('menu', 'newAlignment'), accelerator: 'CmdOrCtrl+N', click: () => { Stingray.newFile(); } },
-            { label: Stingray.i18n.getString('menu', 'openAlignment'), accelerator: 'CmdOrCtrl+O', click: () => { Stingray.openFileDialog(); } },
-            { label: Stingray.i18n.getString('menu', 'closeAlignment'), accelerator: 'CmdOrCtrl+W', click: () => { Stingray.closeFile(); } },
-            { label: Stingray.i18n.getString('menu', 'saveAlignment'), accelerator: 'CmdOrCtrl+S', click: () => { Stingray.saveFile(); } },
-            { label: Stingray.i18n.getString('menu', 'saveAlignmentAs'), accelerator: 'CmdOrCtrl+Shift+S', click: () => { Stingray.saveFileAs(); } },
+            { label: Bunghole.i18n.getString('menu', 'newAlignment'), accelerator: 'CmdOrCtrl+N', click: () => { Bunghole.newFile(); } },
+            { label: Bunghole.i18n.getString('menu', 'openAlignment'), accelerator: 'CmdOrCtrl+O', click: () => { Bunghole.openFileDialog(); } },
+            { label: Bunghole.i18n.getString('menu', 'closeAlignment'), accelerator: 'CmdOrCtrl+W', click: () => { Bunghole.closeFile(); } },
+            { label: Bunghole.i18n.getString('menu', 'saveAlignment'), accelerator: 'CmdOrCtrl+S', click: () => { Bunghole.saveFile(); } },
+            { label: Bunghole.i18n.getString('menu', 'saveAlignmentAs'), accelerator: 'CmdOrCtrl+Shift+S', click: () => { Bunghole.saveFileAs(); } },
             new MenuItem({ type: 'separator' }),
-            { label: Stingray.i18n.getString('menu', 'exportTMX'), click: () => { Stingray.exportTMX(); } },
-            { label: Stingray.i18n.getString('menu', 'exportExcel'), click: () => { Stingray.exportExcel(); } },
-            { label: Stingray.i18n.getString('menu', 'exportCSV'), click: () => { Stingray.exportCSV(); } }
+            { label: Bunghole.i18n.getString('menu', 'exportTMX'), click: () => { Bunghole.exportTMX(); } },
+            { label: Bunghole.i18n.getString('menu', 'exportExcel'), click: () => { Bunghole.exportExcel(); } },
+            { label: Bunghole.i18n.getString('menu', 'exportCSV'), click: () => { Bunghole.exportCSV(); } }
         ]);
-        let recentFiles: string[] = Stingray.loadRecents();
+        let recentFiles: string[] = Bunghole.loadRecents();
         if (recentFiles.length > 0) {
             fileMenu.append(new MenuItem({ type: 'separator' }));
             let length: number = recentFiles.length;
             for (let i = 0; i < length; i++) {
                 let file: string = recentFiles[i];
-                fileMenu.append(new MenuItem({ label: file, click: () => { Stingray.openFile(file) } }));
+                fileMenu.append(new MenuItem({ label: file, click: () => { Bunghole.openFile(file) } }));
             }
         }
         let editMenu: Menu = Menu.buildFromTemplate([
-            { label: Stingray.i18n.getString('menu', 'replaceText'), accelerator: 'CmdOrCtrl+F', click: () => { Stingray.replaceText(); } },
+            { label: Bunghole.i18n.getString('menu', 'replaceText'), accelerator: 'CmdOrCtrl+F', click: () => { Bunghole.replaceText(); } },
             new MenuItem({ type: 'separator' }),
-            { label: Stingray.i18n.getString('menu', 'confirmEdit'), accelerator: 'Alt+Enter', click: () => { Stingray.saveEdit(); } },
-            { label: Stingray.i18n.getString('menu', 'cancelEdit'), accelerator: 'Esc', click: () => { Stingray.cancelEdit(); } },
+            { label: Bunghole.i18n.getString('menu', 'confirmEdit'), accelerator: 'Alt+Enter', click: () => { Bunghole.saveEdit(); } },
+            { label: Bunghole.i18n.getString('menu', 'cancelEdit'), accelerator: 'Esc', click: () => { Bunghole.cancelEdit(); } },
             new MenuItem({ type: 'separator' }),
-            { label: Stingray.i18n.getString('menu', 'moveDown'), accelerator: 'Alt+CmdOrCtrl+Down', click: () => { Stingray.moveSegmentDown(); } },
-            { label: Stingray.i18n.getString('menu', 'moveUp'), accelerator: 'Alt+CmdOrCtrl+Up', click: () => { Stingray.moveSegmentUp(); } },
-            { label: Stingray.i18n.getString('menu', 'splitSegment'), accelerator: 'CmdOrCtrl+L', click: () => { Stingray.splitSegment(); } },
-            { label: Stingray.i18n.getString('menu', 'mergeNext'), accelerator: 'CmdOrCtrl+M', click: () => { Stingray.mergeSegment(); } },
-            { label: Stingray.i18n.getString('menu', 'removeSegment'), accelerator: 'CmdOrCtrl+D', click: () => { Stingray.removeSegment(); } },
+            { label: Bunghole.i18n.getString('menu', 'moveDown'), accelerator: 'Alt+CmdOrCtrl+Down', click: () => { Bunghole.moveSegmentDown(); } },
+            { label: Bunghole.i18n.getString('menu', 'moveUp'), accelerator: 'Alt+CmdOrCtrl+Up', click: () => { Bunghole.moveSegmentUp(); } },
+            { label: Bunghole.i18n.getString('menu', 'splitSegment'), accelerator: 'CmdOrCtrl+L', click: () => { Bunghole.splitSegment(); } },
+            { label: Bunghole.i18n.getString('menu', 'mergeNext'), accelerator: 'CmdOrCtrl+M', click: () => { Bunghole.mergeSegment(); } },
+            { label: Bunghole.i18n.getString('menu', 'removeSegment'), accelerator: 'CmdOrCtrl+D', click: () => { Bunghole.removeSegment(); } },
             new MenuItem({ type: 'separator' }),
-            { label: Stingray.i18n.getString('menu', 'undo'), accelerator: 'CmdOrCtrl+Z', click: () => { BrowserWindow.getFocusedWindow().webContents.undo(); } },
-            { label: Stingray.i18n.getString('menu', 'cut'), accelerator: 'CmdOrCtrl+X', click: () => { BrowserWindow.getFocusedWindow().webContents.cut(); } },
-            { label: Stingray.i18n.getString('menu', 'copy'), accelerator: 'CmdOrCtrl+C', click: () => { BrowserWindow.getFocusedWindow().webContents.copy(); } },
-            { label: Stingray.i18n.getString('menu', 'paste'), accelerator: 'CmdOrCtrl+V', click: () => { BrowserWindow.getFocusedWindow().webContents.paste(); } },
-            { label: Stingray.i18n.getString('menu', 'selectAll'), accelerator: 'CmdOrCtrl+A', click: () => { BrowserWindow.getFocusedWindow().webContents.selectAll(); } }
+            { label: Bunghole.i18n.getString('menu', 'undo'), accelerator: 'CmdOrCtrl+Z', click: () => { BrowserWindow.getFocusedWindow().webContents.undo(); } },
+            { label: Bunghole.i18n.getString('menu', 'cut'), accelerator: 'CmdOrCtrl+X', click: () => { BrowserWindow.getFocusedWindow().webContents.cut(); } },
+            { label: Bunghole.i18n.getString('menu', 'copy'), accelerator: 'CmdOrCtrl+C', click: () => { BrowserWindow.getFocusedWindow().webContents.copy(); } },
+            { label: Bunghole.i18n.getString('menu', 'paste'), accelerator: 'CmdOrCtrl+V', click: () => { BrowserWindow.getFocusedWindow().webContents.paste(); } },
+            { label: Bunghole.i18n.getString('menu', 'selectAll'), accelerator: 'CmdOrCtrl+A', click: () => { BrowserWindow.getFocusedWindow().webContents.selectAll(); } }
         ]);
         let viewMenu: Menu = Menu.buildFromTemplate([
-            { label: Stingray.i18n.getString('menu', 'firstPage'), accelerator: 'CmdOrCtrl+Home', click: () => { Stingray.firstPage(); } },
-            { label: Stingray.i18n.getString('menu', 'previousPage'), accelerator: 'CmdOrCtrl+PageUp', click: () => { Stingray.previousPage(); } },
-            { label: Stingray.i18n.getString('menu', 'nextPage'), accelerator: 'CmdOrCtrl+PageDown', click: () => { Stingray.nextPage(); } },
-            { label: Stingray.i18n.getString('menu', 'lastPage'), accelerator: 'CmdOrCtrl+End', click: () => { Stingray.lastPage(); } },
+            { label: Bunghole.i18n.getString('menu', 'firstPage'), accelerator: 'CmdOrCtrl+Home', click: () => { Bunghole.firstPage(); } },
+            { label: Bunghole.i18n.getString('menu', 'previousPage'), accelerator: 'CmdOrCtrl+PageUp', click: () => { Bunghole.previousPage(); } },
+            { label: Bunghole.i18n.getString('menu', 'nextPage'), accelerator: 'CmdOrCtrl+PageDown', click: () => { Bunghole.nextPage(); } },
+            { label: Bunghole.i18n.getString('menu', 'lastPage'), accelerator: 'CmdOrCtrl+End', click: () => { Bunghole.lastPage(); } },
             new MenuItem({ type: 'separator' }),
-            new MenuItem({ label: Stingray.i18n.getString('menu', 'toggleFullScreen'), role: 'togglefullscreen' })
+            new MenuItem({ label: Bunghole.i18n.getString('menu', 'toggleFullScreen'), role: 'togglefullscreen' })
         ]);
         if (!app.isPackaged) {
-            viewMenu.append(new MenuItem({ label: Stingray.i18n.getString('menu', 'toggleDevTools'), accelerator: 'F12', role: 'toggleDevTools' }));
+            viewMenu.append(new MenuItem({ label: Bunghole.i18n.getString('menu', 'toggleDevTools'), accelerator: 'F12', role: 'toggleDevTools' }));
         }
         let tasksMenu: Menu = Menu.buildFromTemplate([
-            { label: Stingray.i18n.getString('menu', 'removeAllTags'), click: () => { Stingray.removeTags(); } },
-            { label: Stingray.i18n.getString('menu', 'removeDuplicates'), click: () => { Stingray.removeDuplicates(); } },
-            { label: Stingray.i18n.getString('menu', 'changeLanguageCodes'), click: () => { Stingray.changeLanguages(); } },
+            { label: Bunghole.i18n.getString('menu', 'removeAllTags'), click: () => { Bunghole.removeTags(); } },
+            { label: Bunghole.i18n.getString('menu', 'removeDuplicates'), click: () => { Bunghole.removeDuplicates(); } },
+            { label: Bunghole.i18n.getString('menu', 'changeLanguageCodes'), click: () => { Bunghole.changeLanguages(); } },
         ]);
         let helpMenu: Menu = Menu.buildFromTemplate([
-            { label: Stingray.i18n.getString('menu', 'userGuide'), accelerator: 'F1', click: () => { Stingray.showHelp(); } },
+            { label: Bunghole.i18n.getString('menu', 'userGuide'), accelerator: 'F1', click: () => { Bunghole.showHelp(); } },
             new MenuItem({ type: 'separator' }),
-            { label: Stingray.i18n.getString('menu', 'checkUpdates'), click: () => { Stingray.checkUpdates(false); } },
-            { label: Stingray.i18n.getString('menu', 'viewLicenses'), click: () => { Stingray.showLicenses('main'); } },
+            { label: Bunghole.i18n.getString('menu', 'checkUpdates'), click: () => { Bunghole.checkUpdates(false); } },
+            { label: Bunghole.i18n.getString('menu', 'viewLicenses'), click: () => { Bunghole.showLicenses('main'); } },
             new MenuItem({ type: 'separator' }),
-            { label: Stingray.i18n.getString('menu', 'releaseHistory'), click: () => { Stingray.showReleaseHistory(); } },
-            { label: Stingray.i18n.getString('menu', 'supportGroup'), click: () => { Stingray.showSupportGroup(); } }
+            { label: Bunghole.i18n.getString('menu', 'releaseHistory'), click: () => { Bunghole.showReleaseHistory(); } },
+            { label: Bunghole.i18n.getString('menu', 'supportGroup'), click: () => { Bunghole.showSupportGroup(); } }
         ]);
         let template: MenuItem[] = [
-            new MenuItem({ label: Stingray.i18n.getString('menu', 'fileMenu'), role: 'fileMenu', submenu: fileMenu }),
-            new MenuItem({ label: Stingray.i18n.getString('menu', 'editMenu'), role: 'editMenu', submenu: editMenu }),
-            new MenuItem({ label: Stingray.i18n.getString('menu', 'viewMenu'), role: 'viewMenu', submenu: viewMenu }),
-            new MenuItem({ label: Stingray.i18n.getString('menu', 'tasksMenu'), submenu: tasksMenu }),
-            new MenuItem({ label: Stingray.i18n.getString('menu', 'helpMenu'), role: 'help', submenu: helpMenu })
+            new MenuItem({ label: Bunghole.i18n.getString('menu', 'fileMenu'), role: 'fileMenu', submenu: fileMenu }),
+            new MenuItem({ label: Bunghole.i18n.getString('menu', 'editMenu'), role: 'editMenu', submenu: editMenu }),
+            new MenuItem({ label: Bunghole.i18n.getString('menu', 'viewMenu'), role: 'viewMenu', submenu: viewMenu }),
+            new MenuItem({ label: Bunghole.i18n.getString('menu', 'tasksMenu'), submenu: tasksMenu }),
+            new MenuItem({ label: Bunghole.i18n.getString('menu', 'helpMenu'), role: 'help', submenu: helpMenu })
         ];
         if (process.platform === 'darwin') {
             let appleMenu: Menu = Menu.buildFromTemplate([
-                new MenuItem({ label: Stingray.i18n.getString('menu', 'about'), click: () => { Stingray.showAbout(); } }),
+                new MenuItem({ label: Bunghole.i18n.getString('menu', 'about'), click: () => { Bunghole.showAbout(); } }),
                 new MenuItem({
-                    label: Stingray.i18n.getString('menu', 'preferences'), submenu: [
-                        { label: Stingray.i18n.getString('menu', 'settingsMac'), accelerator: 'Cmd+,', click: () => { Stingray.showSettings(); } }
+                    label: Bunghole.i18n.getString('menu', 'preferences'), submenu: [
+                        { label: Bunghole.i18n.getString('menu', 'settingsMac'), accelerator: 'Cmd+,', click: () => { Bunghole.showSettings(); } }
                     ]
                 }),
                 new MenuItem({ type: 'separator' }),
                 new MenuItem({
-                    label: Stingray.i18n.getString('menu', 'services'), role: 'services', submenu: [
-                        { label: Stingray.i18n.getString('menu', 'noServices'), enabled: false }
+                    label: Bunghole.i18n.getString('menu', 'services'), role: 'services', submenu: [
+                        { label: Bunghole.i18n.getString('menu', 'noServices'), enabled: false }
                     ]
                 }),
                 new MenuItem({ type: 'separator' }),
-                new MenuItem({ label: Stingray.i18n.getString('menu', 'quitMac'), accelerator: 'Cmd+Q', role: 'quit', click: () => { app.quit(); } })
+                new MenuItem({ label: Bunghole.i18n.getString('menu', 'quitMac'), accelerator: 'Cmd+Q', role: 'quit', click: () => { app.quit(); } })
             ]);
-            template.unshift(new MenuItem({ label: 'Stingray', role: 'appMenu', submenu: appleMenu }));
+            template.unshift(new MenuItem({ label: 'Bunghole', role: 'appMenu', submenu: appleMenu }));
         } else {
             let help: MenuItem = template.pop();
             template.push(new MenuItem({
-                label: Stingray.i18n.getString('menu', 'settingsMenu'), submenu: [
-                    { label: Stingray.i18n.getString('menu', 'preferences'), click: () => { Stingray.showSettings(); } }
+                label: Bunghole.i18n.getString('menu', 'settingsMenu'), submenu: [
+                    { label: Bunghole.i18n.getString('menu', 'preferences'), click: () => { Bunghole.showSettings(); } }
                 ]
             }));
             template.push(help);
         }
         if (process.platform === 'win32') {
             template[0].submenu.append(new MenuItem({ type: 'separator' }));
-            template[0].submenu.append(new MenuItem({ label: Stingray.i18n.getString('menu', 'quitWindows'), accelerator: 'Alt+F4', role: 'quit', click: () => { app.quit(); } }));
+            template[0].submenu.append(new MenuItem({ label: Bunghole.i18n.getString('menu', 'quitWindows'), accelerator: 'Alt+F4', role: 'quit', click: () => { app.quit(); } }));
             template[5].submenu.append(new MenuItem({ type: 'separator' }));
-            template[5].submenu.append(new MenuItem({ label: Stingray.i18n.getString('menu', 'about'), click: () => { Stingray.showAbout(); } }));
+            template[5].submenu.append(new MenuItem({ label: Bunghole.i18n.getString('menu', 'about'), click: () => { Bunghole.showAbout(); } }));
         }
         if (process.platform === 'linux') {
             template[0].submenu.append(new MenuItem({ type: 'separator' }));
-            template[0].submenu.append(new MenuItem({ label: Stingray.i18n.getString('menu', 'quitLinux'), accelerator: 'Ctrl+Q', role: 'quit', click: () => { app.quit(); } }));
+            template[0].submenu.append(new MenuItem({ label: Bunghole.i18n.getString('menu', 'quitLinux'), accelerator: 'Ctrl+Q', role: 'quit', click: () => { app.quit(); } }));
             template[5].submenu.append(new MenuItem({ type: 'separator' }));
-            template[5].submenu.append(new MenuItem({ label: Stingray.i18n.getString('menu', 'about'), click: () => { Stingray.showAbout(); } }));
+            template[5].submenu.append(new MenuItem({ label: Bunghole.i18n.getString('menu', 'about'), click: () => { Bunghole.showAbout(); } }));
         }
         Menu.setApplicationMenu(Menu.buildFromTemplate(template));
     }
 
     loadDefaults(): void {
-        let defaultsFile: string = Stingray.path.join(app.getPath('appData'), app.name, 'defaults.json');
+        let defaultsFile: string = Bunghole.path.join(app.getPath('appData'), app.name, 'defaults.json');
         this.currentDefaults = { width: 900, height: 700, x: 0, y: 0 };
         if (existsSync(defaultsFile)) {
             try {
@@ -574,11 +601,11 @@ class Stingray {
         }
 
         if (this.currentPreferences.appLang) {
-            if (app.isReady() && this.currentPreferences.appLang !== Stingray.appLang) {
+            if (app.isReady() && this.currentPreferences.appLang !== Bunghole.appLang) {
                 dialog.showMessageBox({
                     type: 'question',
-                    message: Stingray.i18n.getString('Stingray', 'languageChanged'),
-                    buttons: [Stingray.i18n.getString('Stingray', 'restart'), Stingray.i18n.getString('Stingray', 'dismiss')],
+                    message: Bunghole.i18n.getString('Bunghole', 'languageChanged'),
+                    buttons: [Bunghole.i18n.getString('Bunghole', 'restart'), Bunghole.i18n.getString('Bunghole', 'dismiss')],
                     cancelId: 1
                 }).then((value: MessageBoxReturnValue) => {
                     if (value.response == 0) {
@@ -590,7 +617,7 @@ class Stingray {
         } else {
             this.currentPreferences.appLang = 'en';
         }
-        Stingray.appLang = this.currentPreferences.appLang;
+        Bunghole.appLang = this.currentPreferences.appLang;
         let light = 'file://' + this.path.join(app.getAppPath(), 'css', 'light.css');
         let dark = 'file://' + this.path.join(app.getAppPath(), 'css', 'dark.css');
         let highcontrast = 'file://' + this.path.join(app.getAppPath(), 'css', 'highcontrast.css');
@@ -623,8 +650,8 @@ class Stingray {
     }
 
     saveDefaults(): void {
-        let defaultsFile: string = Stingray.path.join(app.getPath('appData'), app.name, 'defaults.json');
-        writeFileSync(defaultsFile, JSON.stringify(Stingray.mainWindow.getBounds()));
+        let defaultsFile: string = Bunghole.path.join(app.getPath('appData'), app.name, 'defaults.json');
+        writeFileSync(defaultsFile, JSON.stringify(Bunghole.mainWindow.getBounds()));
     }
 
     static setTheme(): void {
@@ -635,99 +662,17 @@ class Stingray {
     }
 
     static checkUpdates(silent: boolean): void {
-        session.defaultSession.clearCache().then(() => {
-            let req: Electron.ClientRequest = net.request({
-                url: 'https://maxprograms.com/stingray.json',
-                session: session.defaultSession
-            });
-            req.on('response', (response: IncomingMessage) => {
-                let responseData: string = '';
-                if (response.statusCode !== 200) {
-                    if (!silent) {
-                        let message: string = Stingray.i18n.getString('Stingray', 'serverStatus');
-                        let formattedMessage: string = Stingray.i18n.format(message, ['' + response.statusCode]);
-                        dialog.showMessageBoxSync(Stingray.mainWindow, {
-                            type: MessageTypes.info,
-                            message: formattedMessage
-                        });
-                    }
-                }
-                response.on('data', (chunk: Buffer) => {
-                    responseData += chunk;
-                });
-                response.on('end', () => {
-                    try {
-                        let parsedData = JSON.parse(responseData);
-                        if (app.getVersion() !== parsedData.version) {
-                            Stingray.latestVersion = parsedData.version;
-                            switch (process.platform) {
-                                case 'darwin':
-                                    Stingray.downloadLink = process.arch === 'arm64' ? parsedData.arm64 : parsedData.darwin;
-                                    break;
-                                case 'win32':
-                                    Stingray.downloadLink = parsedData.win32;
-                                    break;
-                                case 'linux':
-                                    Stingray.downloadLink = parsedData.linux;
-                                    break;
-                            }
-                            Stingray.updatesWindow = new BrowserWindow({
-                                parent: this.mainWindow,
-                                width: 590,
-                                height: 240,
-                                minimizable: false,
-                                maximizable: false,
-                                resizable: false,
-                                show: false,
-                                icon: this.path.join(app.getAppPath(), 'icons', 'icon.png'),
-                                webPreferences: {
-                                    nodeIntegration: true,
-                                    contextIsolation: false
-                                }
-                            });
-                            Stingray.updatesWindow.setMenu(null);
-                            let filePath = Stingray.path.join(app.getAppPath(), 'html', Stingray.appLang, 'updates.html');
-                            let fileUrl: URL = new URL('file://' + filePath);
-                            Stingray.updatesWindow.loadURL(fileUrl.href);
-                            Stingray.updatesWindow.once('ready-to-show', () => {
-                                Stingray.updatesWindow.show();
-                            });
-                            this.updatesWindow.on('close', () => {
-                                this.mainWindow.focus();
-                            });
-                        } else {
-                            if (!silent) {
-                                dialog.showMessageBoxSync(Stingray.mainWindow, {
-                                    type: MessageTypes.info,
-                                    message: Stingray.i18n.getString('Stingray', 'noUpdates')
-                                });
-                            }
-                        }
-                    } catch (reason: any) {
-                        if (!silent) {
-                            dialog.showMessageBoxSync(Stingray.mainWindow, {
-                                type: MessageTypes.error,
-                                message: reason.message
-                            });
-                        }
-                    }
-                });
-            });
-            req.on('error', (error: Error) => {
-                if (!silent) {
-                    dialog.showMessageBoxSync(Stingray.mainWindow, {
-                        type: MessageTypes.error,
-                        message: error.message
-                    });
-                }
-            });
-            req.end();
-        });
+        // Use new GitHub-based auto-updater
+        if (silent) {
+            Updater.checkForUpdatesSilently();
+        } else {
+            Updater.checkForUpdatesManually();
+        }
     }
 
     static downloadLatest(): void {
         let downloadsFolder = app.getPath('downloads');
-        let url: URL = new URL(Stingray.downloadLink);
+        let url: URL = new URL(Bunghole.downloadLink);
         let path: string = url.pathname;
         path = path.substring(path.lastIndexOf('/') + 1);
         let file: string = downloadsFolder + (process.platform === 'win32' ? '\\' : '/') + path;
@@ -735,36 +680,36 @@ class Stingray {
             unlinkSync(file);
         }
         let req: Electron.ClientRequest = net.request({
-            url: Stingray.downloadLink,
+            url: Bunghole.downloadLink,
             session: session.defaultSession
         });
-        Stingray.mainWindow.webContents.send('set-status', 'Downloading...');
-        Stingray.updatesWindow.close();
+        Bunghole.mainWindow.webContents.send('set-status', 'Downloading...');
+        Bunghole.updatesWindow.close();
         req.on('response', (response: IncomingMessage) => {
             let fileSize = Number.parseInt(response.headers['content-length'] as string);
             let received: number = 0;
-            let downloadedMessage: string = Stingray.i18n.getString('Stingray', 'downloaded');
+            let downloadedMessage: string = Bunghole.i18n.getString('Bunghole', 'downloaded');
             response.on('data', (chunk: Buffer) => {
                 received += chunk.length;
                 if (process.platform === 'win32' || process.platform === 'darwin') {
-                    Stingray.mainWindow.setProgressBar(received / fileSize);
+                    Bunghole.mainWindow.setProgressBar(received / fileSize);
                 }
-                let message: string = Stingray.i18n.format(downloadedMessage, ['' + Math.trunc(received * 100 / fileSize)]);
-                Stingray.mainWindow.webContents.send('set-status', message);
+                let message: string = Bunghole.i18n.format(downloadedMessage, ['' + Math.trunc(received * 100 / fileSize)]);
+                Bunghole.mainWindow.webContents.send('set-status', message);
                 appendFileSync(file, chunk);
             });
             response.on('end', () => {
-                Stingray.mainWindow.webContents.send('set-status', '');
+                Bunghole.mainWindow.webContents.send('set-status', '');
                 dialog.showMessageBox({
                     type: MessageTypes.info,
-                    message: Stingray.i18n.getString('Stingray', 'updateDownloaded')
+                    message: Bunghole.i18n.getString('Bunghole', 'updateDownloaded')
                 });
                 if (process.platform === 'win32' || process.platform === 'darwin') {
-                    Stingray.mainWindow.setProgressBar(0);
+                    Bunghole.mainWindow.setProgressBar(0);
                     shell.openPath(file).then(() => {
                         app.quit();
                     }).catch((reason: string) => {
-                        dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), reason);
+                        dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), reason);
                     });
                 }
                 if (process.platform === 'linux') {
@@ -772,10 +717,10 @@ class Stingray {
                 }
             });
             response.on('error', (error: Error) => {
-                Stingray.mainWindow.webContents.send('set-status', '');
-                dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), error.message);
+                Bunghole.mainWindow.webContents.send('set-status', '');
+                dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), error.message);
                 if (process.platform === 'win32' || process.platform === 'darwin') {
-                    Stingray.mainWindow.setProgressBar(0);
+                    Bunghole.mainWindow.setProgressBar(0);
                 }
             });
         });
@@ -801,13 +746,13 @@ class Stingray {
         this.aboutWindow.on('closed', () => {
             this.mainWindow.focus();
         });
-        let filePath = Stingray.path.join(app.getAppPath(), 'html', Stingray.appLang, 'about.html');
+        let filePath = Bunghole.path.join(app.getAppPath(), 'html', Bunghole.appLang, 'about.html');
         let fileUrl: URL = new URL('file://' + filePath);
         this.aboutWindow.loadURL(fileUrl.href);
         this.aboutWindow.once('ready-to-show', () => {
             this.aboutWindow.show();
         });
-        Stingray.setLocation(this.aboutWindow, 'about.html');
+        Bunghole.setLocation(this.aboutWindow, 'about.html');
     }
 
     static showSettings(): void {
@@ -829,24 +774,24 @@ class Stingray {
         this.settingsWindow.on('closed', () => {
             this.mainWindow.focus();
         });
-        let filePath = Stingray.path.join(app.getAppPath(), 'html', Stingray.appLang, 'preferences.html');
+        let filePath = Bunghole.path.join(app.getAppPath(), 'html', Bunghole.appLang, 'preferences.html');
         let fileUrl: URL = new URL('file://' + filePath);
         this.settingsWindow.loadURL(fileUrl.href);
         this.settingsWindow.once('ready-to-show', () => {
             this.settingsWindow.show();
         });
-        Stingray.setLocation(this.settingsWindow, 'preferences.html');
+        Bunghole.setLocation(this.settingsWindow, 'preferences.html');
     }
 
     static showHelp(): void {
-        let filePath = this.path.join(app.getAppPath(), 'stingray_' + Stingray.appLang + '.pdf');
+        let filePath = this.path.join(app.getAppPath(), 'bunghole_' + Bunghole.appLang + '.pdf');
         let fileUrl: URL = new URL('file://' + filePath);
         shell.openExternal(fileUrl.href);
     }
 
     static showSystemInfo() {
         this.systemInfoWindow = new BrowserWindow({
-            parent: Stingray.aboutWindow,
+            parent: Bunghole.aboutWindow,
             width: 420,
             height: 230,
             minimizable: false,
@@ -860,16 +805,16 @@ class Stingray {
             }
         });
         this.systemInfoWindow.setMenu(null);
-        let filePath = Stingray.path.join(app.getAppPath(), 'html', Stingray.appLang, 'systemInfo.html');
+        let filePath = Bunghole.path.join(app.getAppPath(), 'html', Bunghole.appLang, 'systemInfo.html');
         let fileUrl: URL = new URL('file://' + filePath);
         this.systemInfoWindow.loadURL(fileUrl.href);
         this.systemInfoWindow.once('ready-to-show', () => {
             this.systemInfoWindow.show();
         });
         this.systemInfoWindow.on('close', () => {
-            Stingray.aboutWindow.focus();
+            Bunghole.aboutWindow.focus();
         });
-        Stingray.setLocation(this.systemInfoWindow, 'systemInfo.html');
+        Bunghole.setLocation(this.systemInfoWindow, 'systemInfo.html');
     }
 
     static getSystemInformation(event: IpcMainEvent) {
@@ -879,23 +824,23 @@ class Stingray {
                     data.electron = process.versions.electron;
                     event.sender.send('set-system-info', data);
                 } else {
-                    dialog.showMessageBoxSync(Stingray.mainWindow, { type: MessageTypes.error, message: data.reason });
+                    dialog.showMessageBoxSync(Bunghole.mainWindow, { type: MessageTypes.error, message: data.reason });
                 }
             },
             (reason: string) => {
-                dialog.showMessageBoxSync(Stingray.mainWindow, { type: MessageTypes.error, message: reason });
+                dialog.showMessageBoxSync(Bunghole.mainWindow, { type: MessageTypes.error, message: reason });
             }
         );
     }
 
     static setLocation(window: BrowserWindow, key: string): void {
-        if (Stingray.locations.hasLocation(key)) {
-            let position: Point = Stingray.locations.getLocation(key);
+        if (Bunghole.locations.hasLocation(key)) {
+            let position: Point = Bunghole.locations.getLocation(key);
             window.setPosition(position.x, position.y, true);
         }
         window.addListener('moved', () => {
             let bounds: Rectangle = window.getBounds();
-            Stingray.locations.setLocation(key, bounds.x, bounds.y);
+            Bunghole.locations.setLocation(key, bounds.x, bounds.y);
         });
     }
 
@@ -916,7 +861,7 @@ class Stingray {
             }
         });
         this.licensesWindow.setMenu(null);
-        let filePath = Stingray.path.join(app.getAppPath(), 'html', Stingray.appLang, 'licenses.html');
+        let filePath = Bunghole.path.join(app.getAppPath(), 'html', Bunghole.appLang, 'licenses.html');
         let fileUrl: URL = new URL('file://' + filePath);
         this.licensesWindow.loadURL(fileUrl.href);
         this.licensesWindow.once('ready-to-show', () => {
@@ -925,14 +870,14 @@ class Stingray {
         this.licensesWindow.on('close', () => {
             parent.focus();
         });
-        Stingray.setLocation(this.licensesWindow, 'licenses.html');
+        Bunghole.setLocation(this.licensesWindow, 'licenses.html');
     }
 
     static openLicense(type: string) {
         let licenseFile = '';
         let title = '';
         switch (type) {
-            case 'Stingray':
+            case 'Bunghole':
                 licenseFile = 'EclipsePublicLicense1.0.html';
                 title = 'Eclipse Public License 1.0';
                 break;
@@ -966,14 +911,14 @@ class Stingray {
                 title = 'LGPL 2.1';
                 break;
             default:
-                dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), 'Unknow license');
+                dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), 'Unknow license');
                 return;
         }
-        let filePath = Stingray.path.join(app.getAppPath(), 'html', 'licenses', licenseFile);
+        let filePath = Bunghole.path.join(app.getAppPath(), 'html', 'licenses', licenseFile);
         let fileUrl: URL = new URL('file://' + filePath);
 
         let licenseWindow = new BrowserWindow({
-            parent: Stingray.licensesWindow,
+            parent: Bunghole.licensesWindow,
             width: 680,
             height: 400,
             show: false,
@@ -988,7 +933,7 @@ class Stingray {
         licenseWindow.loadURL(fileUrl.href);
         licenseWindow.show();
         licenseWindow.on('close', () => {
-            Stingray.licensesWindow.focus();
+            Bunghole.licensesWindow.focus();
         });
     }
 
@@ -1037,49 +982,49 @@ class Stingray {
     }
 
     getLanguages(event: IpcMainEvent): void {
-        Stingray.sendRequest('/getLanguages', {},
+        Bunghole.sendRequest('/getLanguages', {},
             (data: any) => {
                 if (data.status === 'Success') {
-                    data.srcLang = Stingray.currentPreferences.srcLang;
-                    data.tgtLang = Stingray.currentPreferences.tgtLang;
-                    data.appLang = Stingray.currentPreferences.appLang;
+                    data.srcLang = Bunghole.currentPreferences.srcLang;
+                    data.tgtLang = Bunghole.currentPreferences.tgtLang;
+                    data.appLang = Bunghole.currentPreferences.appLang;
                     event.sender.send('set-languages', data);
                 } else {
-                    dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), data.reason);
+                    dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), data.reason);
                 }
             },
             (reason: string) => {
-                dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), reason);
+                dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), reason);
             }
         );
     }
 
     getTypes(event: IpcMainEvent): void {
-        Stingray.sendRequest('/getTypes', {},
+        Bunghole.sendRequest('/getTypes', {},
             (data: any) => {
                 if (data.status === 'Success') {
                     event.sender.send('set-types', data);
                 } else {
-                    dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), data.reason);
+                    dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), data.reason);
                 }
             },
             (reason: string) => {
-                dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), reason);
+                dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), reason);
             }
         );
     }
 
     getCharsets(event: IpcMainEvent): void {
-        Stingray.sendRequest('/getCharsets', {},
+        Bunghole.sendRequest('/getCharsets', {},
             (data: any) => {
                 if (data.status === 'Success') {
                     event.sender.send('set-charsets', data);
                 } else {
-                    dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), data.reason);
+                    dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), data.reason);
                 }
             },
             (reason: string) => {
-                dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), reason);
+                dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), reason);
             }
         );
     }
@@ -1103,23 +1048,23 @@ class Stingray {
             this.mainWindow.focus();
         });
         this.newFileWindow.setMenu(null);
-        let filePath = Stingray.path.join(app.getAppPath(), 'html', Stingray.appLang, 'newFile.html');
+        let filePath = Bunghole.path.join(app.getAppPath(), 'html', Bunghole.appLang, 'newFile.html');
         let fileUrl: URL = new URL('file://' + filePath);
         this.newFileWindow.loadURL(fileUrl.href);
         this.newFileWindow.once('ready-to-show', () => {
             this.newFileWindow.show();
         });
-        Stingray.setLocation(this.newFileWindow, 'newFile.html');
+        Bunghole.setLocation(this.newFileWindow, 'newFile.html');
     }
 
     browseSRX(event: IpcMainEvent): void {
         dialog.showOpenDialog({
             title: 'Default SRX File',
-            defaultPath: Stingray.currentPreferences.srx,
+            defaultPath: Bunghole.currentPreferences.srx,
             properties: ['openFile'],
             filters: [
-                { name: Stingray.i18n.getString('Stingray', 'srxFile'), extensions: ['srx'] },
-                { name: Stingray.i18n.getString('Stingray', 'anyFile'), extensions: ['*'] }
+                { name: Bunghole.i18n.getString('Bunghole', 'srxFile'), extensions: ['srx'] },
+                { name: Bunghole.i18n.getString('Bunghole', 'anyFile'), extensions: ['*'] }
             ]
         }).then((value) => {
             if (!value.canceled) {
@@ -1133,11 +1078,11 @@ class Stingray {
     browseCatalog(event: IpcMainEvent): void {
         dialog.showOpenDialog({
             title: 'Default Catalog',
-            defaultPath: Stingray.currentPreferences.catalog,
+            defaultPath: Bunghole.currentPreferences.catalog,
             properties: ['openFile'],
             filters: [
-                { name: Stingray.i18n.getString('Stingray', 'xmlFile'), extensions: ['xml'] },
-                { name: Stingray.i18n.getString('Stingray', 'anyFile'), extensions: ['*'] }
+                { name: Bunghole.i18n.getString('Bunghole', 'xmlFile'), extensions: ['xml'] },
+                { name: Bunghole.i18n.getString('Bunghole', 'anyFile'), extensions: ['*'] }
             ]
         }).then((value) => {
             if (!value.canceled) {
@@ -1150,11 +1095,11 @@ class Stingray {
 
     browseAlignment(event: IpcMainEvent): void {
         dialog.showSaveDialog({
-            title: Stingray.i18n.getString('Stingray', 'newAlignmentFile'),
+            title: Bunghole.i18n.getString('Bunghole', 'newAlignmentFile'),
             properties: ['createDirectory', 'showOverwriteConfirmation'],
             filters: [
-                { name: Stingray.i18n.getString('Stingray', 'algnFile'), extensions: ['algn'] },
-                { name: Stingray.i18n.getString('Stingray', 'anyFile'), extensions: [''] }
+                { name: Bunghole.i18n.getString('Bunghole', 'algnFile'), extensions: ['algn'] },
+                { name: Bunghole.i18n.getString('Bunghole', 'anyFile'), extensions: [''] }
             ]
         }).then((value) => {
             if (!value.canceled) {
@@ -1167,32 +1112,32 @@ class Stingray {
 
     browseSource(event: IpcMainEvent): void {
         let filters: any[] = [
-            { name: Stingray.i18n.getString('FileFormats', 'anyFile'), extensions: ['*'] },
-            { name: Stingray.i18n.getString('FileFormats', 'icml'), extensions: ['icml'] },
-            { name: Stingray.i18n.getString('FileFormats', 'inx'), extensions: ['inx'] },
-            { name: Stingray.i18n.getString('FileFormats', 'idml'), extensions: ['idml'] },
-            { name: Stingray.i18n.getString('FileFormats', 'ditamap'), extensions: ['ditamap', 'dita', 'xml'] },
-            { name: Stingray.i18n.getString('FileFormats', 'html'), extensions: ['html', Stingray.appLang, 'htm'] },
-            { name: Stingray.i18n.getString('FileFormats', 'javascript'), extensions: ['js'] },
-            { name: Stingray.i18n.getString('FileFormats', 'properties'), extensions: ['properties'] },
-            { name: Stingray.i18n.getString('FileFormats', 'json'), extensions: ['json'] },
-            { name: Stingray.i18n.getString('FileFormats', 'mif'), extensions: ['mif'] },
-            { name: Stingray.i18n.getString('FileFormats', 'office'), extensions: ['docx', 'xlsx', 'pptx'] },
-            { name: Stingray.i18n.getString('FileFormats', 'openOffice1'), extensions: ['sxw', 'sxc', 'sxi', 'sxd'] },
-            { name: Stingray.i18n.getString('FileFormats', 'openOffice2'), extensions: ['odt', 'ods', 'odp', 'odg'] },
-            { name: Stingray.i18n.getString('FileFormats', 'php'), extensions: ['php'] },
-            { name: Stingray.i18n.getString('FileFormats', 'plainText'), extensions: ['txt'] },
-            { name: Stingray.i18n.getString('FileFormats', 'qti'), extensions: ['xml'] },
-            { name: Stingray.i18n.getString('FileFormats', 'qtipackage'), extensions: ['zip'] },
-            { name: Stingray.i18n.getString('FileFormats', 'rc'), extensions: ['rc'] },
-            { name: Stingray.i18n.getString('FileFormats', 'resx'), extensions: ['resx'] },
-            { name: Stingray.i18n.getString('FileFormats', 'srt'), extensions: ['srt'] },
-            { name: Stingray.i18n.getString('FileFormats', 'svg'), extensions: ['svg'] },
-            { name: Stingray.i18n.getString('FileFormats', 'visio'), extensions: ['vsdx'] },
-            { name: Stingray.i18n.getString('FileFormats', 'xml'), extensions: ['xml'] }
+            { name: Bunghole.i18n.getString('FileFormats', 'anyFile'), extensions: ['*'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'icml'), extensions: ['icml'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'inx'), extensions: ['inx'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'idml'), extensions: ['idml'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'ditamap'), extensions: ['ditamap', 'dita', 'xml'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'html'), extensions: ['html', Bunghole.appLang, 'htm'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'javascript'), extensions: ['js'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'properties'), extensions: ['properties'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'json'), extensions: ['json'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'mif'), extensions: ['mif'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'office'), extensions: ['docx', 'xlsx', 'pptx'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'openOffice1'), extensions: ['sxw', 'sxc', 'sxi', 'sxd'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'openOffice2'), extensions: ['odt', 'ods', 'odp', 'odg'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'php'), extensions: ['php'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'plainText'), extensions: ['txt'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'qti'), extensions: ['xml'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'qtipackage'), extensions: ['zip'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'rc'), extensions: ['rc'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'resx'), extensions: ['resx'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'srt'), extensions: ['srt'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'svg'), extensions: ['svg'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'visio'), extensions: ['vsdx'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'xml'), extensions: ['xml'] }
         ];
         dialog.showOpenDialog({
-            title: Stingray.i18n.getString('Stingray', 'sourceFile'),
+            title: Bunghole.i18n.getString('Bunghole', 'sourceFile'),
             properties: ['openFile'],
             filters: filters
         }).then((value) => {
@@ -1206,32 +1151,32 @@ class Stingray {
 
     browseTarget(event: IpcMainEvent): void {
         let filters: any[] = [
-            { name: Stingray.i18n.getString('FileFormats', 'anyFile'), extensions: ['*'] },
-            { name: Stingray.i18n.getString('FileFormats', 'icml'), extensions: ['icml'] },
-            { name: Stingray.i18n.getString('FileFormats', 'inx'), extensions: ['inx'] },
-            { name: Stingray.i18n.getString('FileFormats', 'idml'), extensions: ['idml'] },
-            { name: Stingray.i18n.getString('FileFormats', 'ditamap'), extensions: ['ditamap', 'dita', 'xml'] },
-            { name: Stingray.i18n.getString('FileFormats', 'html'), extensions: ['html', Stingray.appLang, 'htm'] },
-            { name: Stingray.i18n.getString('FileFormats', 'javascript'), extensions: ['js'] },
-            { name: Stingray.i18n.getString('FileFormats', 'properties'), extensions: ['properties'] },
-            { name: Stingray.i18n.getString('FileFormats', 'json'), extensions: ['json'] },
-            { name: Stingray.i18n.getString('FileFormats', 'mif'), extensions: ['mif'] },
-            { name: Stingray.i18n.getString('FileFormats', 'office'), extensions: ['docx', 'xlsx', 'pptx'] },
-            { name: Stingray.i18n.getString('FileFormats', 'openOffice1'), extensions: ['sxw', 'sxc', 'sxi', 'sxd'] },
-            { name: Stingray.i18n.getString('FileFormats', 'openOffice2'), extensions: ['odt', 'ods', 'odp', 'odg'] },
-            { name: Stingray.i18n.getString('FileFormats', 'php'), extensions: ['php'] },
-            { name: Stingray.i18n.getString('FileFormats', 'plainText'), extensions: ['txt'] },
-            { name: Stingray.i18n.getString('FileFormats', 'qti'), extensions: ['xml'] },
-            { name: Stingray.i18n.getString('FileFormats', 'qtipackage'), extensions: ['zip'] },
-            { name: Stingray.i18n.getString('FileFormats', 'rc'), extensions: ['rc'] },
-            { name: Stingray.i18n.getString('FileFormats', 'resx'), extensions: ['resx'] },
-            { name: Stingray.i18n.getString('FileFormats', 'srt'), extensions: ['srt'] },
-            { name: Stingray.i18n.getString('FileFormats', 'svg'), extensions: ['svg'] },
-            { name: Stingray.i18n.getString('FileFormats', 'visio'), extensions: ['vsdx'] },
-            { name: Stingray.i18n.getString('FileFormats', 'xml'), extensions: ['xml'] }
+            { name: Bunghole.i18n.getString('FileFormats', 'anyFile'), extensions: ['*'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'icml'), extensions: ['icml'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'inx'), extensions: ['inx'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'idml'), extensions: ['idml'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'ditamap'), extensions: ['ditamap', 'dita', 'xml'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'html'), extensions: ['html', Bunghole.appLang, 'htm'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'javascript'), extensions: ['js'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'properties'), extensions: ['properties'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'json'), extensions: ['json'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'mif'), extensions: ['mif'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'office'), extensions: ['docx', 'xlsx', 'pptx'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'openOffice1'), extensions: ['sxw', 'sxc', 'sxi', 'sxd'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'openOffice2'), extensions: ['odt', 'ods', 'odp', 'odg'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'php'), extensions: ['php'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'plainText'), extensions: ['txt'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'qti'), extensions: ['xml'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'qtipackage'), extensions: ['zip'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'rc'), extensions: ['rc'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'resx'), extensions: ['resx'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'srt'), extensions: ['srt'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'svg'), extensions: ['svg'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'visio'), extensions: ['vsdx'] },
+            { name: Bunghole.i18n.getString('FileFormats', 'xml'), extensions: ['xml'] }
         ];
         dialog.showOpenDialog({
-            title: Stingray.i18n.getString('Stingray', 'targetFile'),
+            title: Bunghole.i18n.getString('Bunghole', 'targetFile'),
             properties: ['openFile'],
             filters: filters
         }).then((value) => {
@@ -1244,65 +1189,65 @@ class Stingray {
     }
 
     getFileType(event: IpcMainEvent, file: string, arg: string): void {
-        Stingray.sendRequest('/getFileType', { file: file },
+        Bunghole.sendRequest('/getFileType', { file: file },
             (data: any) => {
                 event.sender.send(arg, data);
             },
             (reason: string) => {
-                dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), reason);
+                dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), reason);
             }
         );
     }
 
     static createAlignment(params: any): void {
         this.newFileWindow.close();
-        Stingray.mainWindow.webContents.send('start-waiting');
-        Stingray.mainWindow.webContents.send('set-status', Stingray.i18n.getString('Stingray', 'preparingFiles'));
-        params.catalog = Stingray.currentPreferences.catalog;
-        params.srx = Stingray.currentPreferences.srx;
+        Bunghole.mainWindow.webContents.send('start-waiting');
+        Bunghole.mainWindow.webContents.send('set-status', Bunghole.i18n.getString('Bunghole', 'preparingFiles'));
+        params.catalog = Bunghole.currentPreferences.catalog;
+        params.srx = Bunghole.currentPreferences.srx;
         params.xmlfilter = this.path.join(app.getAppPath(), 'xmlfilter');
         this.sendRequest('/alignFiles', params,
             (data: any) => {
                 if (data.status === 'Success') {
-                    Stingray.alignmentStatus.aligning = true;
-                    Stingray.alignmentStatus.status = Stingray.i18n.getString('Stingray', 'preparingFiles');
+                    Bunghole.alignmentStatus.aligning = true;
+                    Bunghole.alignmentStatus.status = Bunghole.i18n.getString('Bunghole', 'preparingFiles');
                     let intervalObject = setInterval(() => {
-                        if (Stingray.alignmentStatus.aligning) {
-                            Stingray.mainWindow.webContents.send('set-status', Stingray.alignmentStatus.status);
+                        if (Bunghole.alignmentStatus.aligning) {
+                            Bunghole.mainWindow.webContents.send('set-status', Bunghole.alignmentStatus.status);
                         } else {
                             clearInterval(intervalObject);
-                            Stingray.mainWindow.webContents.send('end-waiting');
-                            Stingray.mainWindow.webContents.send('set-status', '');
-                            if (Stingray.alignmentStatus.alignError !== '') {
-                                dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), Stingray.alignmentStatus.alignError);
+                            Bunghole.mainWindow.webContents.send('end-waiting');
+                            Bunghole.mainWindow.webContents.send('set-status', '');
+                            if (Bunghole.alignmentStatus.alignError !== '') {
+                                dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), Bunghole.alignmentStatus.alignError);
                             } else {
-                                Stingray.openFile(params.alignmentFile);
+                                Bunghole.openFile(params.alignmentFile);
                                 let save: boolean = false;
-                                if (Stingray.currentPreferences.srcLang === 'none') {
-                                    Stingray.currentPreferences.srcLang = params.srcLang;
+                                if (Bunghole.currentPreferences.srcLang === 'none') {
+                                    Bunghole.currentPreferences.srcLang = params.srcLang;
                                     save = true;
                                 }
-                                if (Stingray.currentPreferences.tgtLang === 'none') {
-                                    Stingray.currentPreferences.tgtLang = params.tgtLang;
+                                if (Bunghole.currentPreferences.tgtLang === 'none') {
+                                    Bunghole.currentPreferences.tgtLang = params.tgtLang;
                                     save = true;
                                 }
                                 if (save) {
-                                    Stingray.savePreferences();
+                                    Bunghole.savePreferences();
                                 }
                             }
                         }
-                        Stingray.getAlignmentStatus();
+                        Bunghole.getAlignmentStatus();
                     }, 500);
                 } else {
-                    Stingray.mainWindow.webContents.send('end-waiting');
-                    Stingray.mainWindow.webContents.send('set-status', '');
-                    dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), data.reason);
+                    Bunghole.mainWindow.webContents.send('end-waiting');
+                    Bunghole.mainWindow.webContents.send('set-status', '');
+                    dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), data.reason);
                 }
             },
             (reason: string) => {
-                Stingray.mainWindow.webContents.send('end-waiting');
-                Stingray.mainWindow.webContents.send('set-status', '');
-                dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), reason);
+                Bunghole.mainWindow.webContents.send('end-waiting');
+                Bunghole.mainWindow.webContents.send('set-status', '');
+                dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), reason);
             }
         );
     }
@@ -1310,27 +1255,27 @@ class Stingray {
     static getAlignmentStatus(): void {
         this.sendRequest('/alignmentStatus', {},
             (data: any) => {
-                Stingray.alignmentStatus = data;
+                Bunghole.alignmentStatus = data;
             },
             (reason: string) => {
-                Stingray.alignmentStatus.aligning = false;
-                Stingray.alignmentStatus.alignError = reason;
-                Stingray.alignmentStatus.status = '';
+                Bunghole.alignmentStatus.aligning = false;
+                Bunghole.alignmentStatus.alignError = reason;
+                Bunghole.alignmentStatus.status = '';
             }
         );
     }
 
     static openFileDialog(): void {
         dialog.showOpenDialog({
-            title: Stingray.i18n.getString('Stingray', 'alignmentFile'),
+            title: Bunghole.i18n.getString('Bunghole', 'alignmentFile'),
             properties: ['openFile'],
             filters: [
-                { name: Stingray.i18n.getString('Stingray', 'algnFile'), extensions: ['algn'] },
-                { name: Stingray.i18n.getString('Stingray', 'anyFile'), extensions: ['*'] }
+                { name: Bunghole.i18n.getString('Bunghole', 'algnFile'), extensions: ['algn'] },
+                { name: Bunghole.i18n.getString('Bunghole', 'anyFile'), extensions: ['*'] }
             ]
         }).then((value) => {
             if (!value.canceled) {
-                Stingray.openFile(value.filePaths[0]);
+                Bunghole.openFile(value.filePaths[0]);
             }
         }).catch((error) => {
             console.log(error);
@@ -1341,41 +1286,41 @@ class Stingray {
         if (this.currentFile !== '') {
             this.closeFile();
         }
-        Stingray.mainWindow.webContents.send('start-waiting');
-        Stingray.mainWindow.webContents.send('set-status', Stingray.i18n.getString('Stingray', 'loadingFile'));
+        Bunghole.mainWindow.webContents.send('start-waiting');
+        Bunghole.mainWindow.webContents.send('set-status', Bunghole.i18n.getString('Bunghole', 'loadingFile'));
         this.sendRequest('/openFile', { file: file },
             (data: any) => {
                 if (data.status === 'Success') {
-                    Stingray.loadingStatus.loading = true;
-                    Stingray.loadingStatus.status = Stingray.i18n.getString('Stingray', 'loadingFile');
+                    Bunghole.loadingStatus.loading = true;
+                    Bunghole.loadingStatus.status = Bunghole.i18n.getString('Bunghole', 'loadingFile');
                     let intervalObject = setInterval(() => {
-                        if (Stingray.loadingStatus.loading) {
+                        if (Bunghole.loadingStatus.loading) {
                             // keep waiting
                         } else {
                             clearInterval(intervalObject);
-                            Stingray.mainWindow.webContents.send('end-waiting');
-                            Stingray.mainWindow.webContents.send('set-status', '');
-                            if (Stingray.loadingStatus.loadError !== '') {
-                                dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), Stingray.loadingStatus.loadError);
+                            Bunghole.mainWindow.webContents.send('end-waiting');
+                            Bunghole.mainWindow.webContents.send('set-status', '');
+                            if (Bunghole.loadingStatus.loadError !== '') {
+                                dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), Bunghole.loadingStatus.loadError);
                             } else {
-                                Stingray.currentFile = file;
-                                Stingray.saved = true;
-                                Stingray.getFileInfo();
-                                Stingray.saveRecent(Stingray.currentFile);
+                                Bunghole.currentFile = file;
+                                Bunghole.saved = true;
+                                Bunghole.getFileInfo();
+                                Bunghole.saveRecent(Bunghole.currentFile);
                             }
                         }
-                        Stingray.getLoadingStatus();
+                        Bunghole.getLoadingStatus();
                     }, 500);
                 } else {
-                    Stingray.mainWindow.webContents.send('end-waiting');
-                    Stingray.mainWindow.webContents.send('set-status', '');
-                    dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), data.reason);
+                    Bunghole.mainWindow.webContents.send('end-waiting');
+                    Bunghole.mainWindow.webContents.send('set-status', '');
+                    dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), data.reason);
                 }
             },
             (reason: string) => {
-                Stingray.mainWindow.webContents.send('end-waiting');
-                Stingray.mainWindow.webContents.send('set-status', '');
-                dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), reason);
+                Bunghole.mainWindow.webContents.send('end-waiting');
+                Bunghole.mainWindow.webContents.send('set-status', '');
+                dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), reason);
             }
         );
     }
@@ -1383,12 +1328,12 @@ class Stingray {
     static getLoadingStatus(): void {
         this.sendRequest('/loadingStatus', {},
             (data: any) => {
-                Stingray.loadingStatus = data;
+                Bunghole.loadingStatus = data;
             },
             (reason: string) => {
-                Stingray.loadingStatus.loading = false;
-                Stingray.loadingStatus.LoadError = reason;
-                Stingray.loadingStatus.status = '';
+                Bunghole.loadingStatus.loading = false;
+                Bunghole.loadingStatus.LoadError = reason;
+                Bunghole.loadingStatus.status = '';
             }
         );
     }
@@ -1396,12 +1341,12 @@ class Stingray {
     static getFileInfo(): void {
         this.sendRequest('/getFileInfo', {},
             (data: any) => {
-                Stingray.srcLang = data.srcLang.code;
-                Stingray.tgtLang = data.tgtLang.code;
-                Stingray.mainWindow.webContents.send('file-info', data);
+                Bunghole.srcLang = data.srcLang.code;
+                Bunghole.tgtLang = data.tgtLang.code;
+                Bunghole.mainWindow.webContents.send('file-info', data);
             },
             (reason: string) => {
-                dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), reason);
+                dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), reason);
             }
         );
     }
@@ -1409,28 +1354,28 @@ class Stingray {
     static getRows(params: any): void {
         this.sendRequest('/getRows', params,
             (data: any) => {
-                Stingray.mainWindow.webContents.send('set-rows', data);
+                Bunghole.mainWindow.webContents.send('set-rows', data);
             },
             (reason: string) => {
-                dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), reason);
+                dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), reason);
             }
         );
     }
 
     static firstPage(): void {
-        Stingray.mainWindow.webContents.send('first-page');
+        Bunghole.mainWindow.webContents.send('first-page');
     }
 
     static previousPage(): void {
-        Stingray.mainWindow.webContents.send('previous-page');
+        Bunghole.mainWindow.webContents.send('previous-page');
     }
 
     static nextPage(): void {
-        Stingray.mainWindow.webContents.send('next-page');
+        Bunghole.mainWindow.webContents.send('next-page');
     }
 
     static lastPage(): void {
-        Stingray.mainWindow.webContents.send('last-page');
+        Bunghole.mainWindow.webContents.send('last-page');
     }
 
     static closeFile(): void {
@@ -1438,19 +1383,19 @@ class Stingray {
             return;
         }
         if (!this.saved) {
-            let clicked: number = dialog.showMessageBoxSync(Stingray.mainWindow, {
+            let clicked: number = dialog.showMessageBoxSync(Bunghole.mainWindow, {
                 type: 'question',
-                title: Stingray.i18n.getString('Stingray', 'saveChanges'),
-                message: Stingray.i18n.getString('Stingray', 'unsavedChanges'),
+                title: Bunghole.i18n.getString('Bunghole', 'saveChanges'),
+                message: Bunghole.i18n.getString('Bunghole', 'unsavedChanges'),
                 buttons: [
-                    Stingray.i18n.getString('Stingray', 'dontSave'),
-                    Stingray.i18n.getString('Stingray', 'cancel'),
-                    Stingray.i18n.getString('Stingray', 'save')],
+                    Bunghole.i18n.getString('Bunghole', 'dontSave'),
+                    Bunghole.i18n.getString('Bunghole', 'cancel'),
+                    Bunghole.i18n.getString('Bunghole', 'save')],
                 defaultId: 2
             });
             if (clicked === 0) {
-                Stingray.saved = true;
-                Stingray.mainWindow.setDocumentEdited(false);
+                Bunghole.saved = true;
+                Bunghole.mainWindow.setDocumentEdited(false);
                 if (this.shouldQuit) {
                     app.quit();
                 }
@@ -1467,12 +1412,12 @@ class Stingray {
         if (!this.shouldQuit) {
             this.sendRequest('/closeFile', {},
                 (data: any) => {
-                    Stingray.saved = true;
-                    Stingray.mainWindow.setDocumentEdited(false);
-                    Stingray.mainWindow.webContents.send('clear-file');
+                    Bunghole.saved = true;
+                    Bunghole.mainWindow.setDocumentEdited(false);
+                    Bunghole.mainWindow.webContents.send('clear-file');
                 },
                 (reason: string) => {
-                    dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), reason);
+                    dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), reason);
                 }
             );
         }
@@ -1482,41 +1427,41 @@ class Stingray {
         if (this.currentFile === '') {
             return;
         }
-        Stingray.mainWindow.webContents.send('start-waiting');
-        Stingray.mainWindow.webContents.send('set-status', Stingray.i18n.getString('Stingray', 'savingFile'));
+        Bunghole.mainWindow.webContents.send('start-waiting');
+        Bunghole.mainWindow.webContents.send('set-status', Bunghole.i18n.getString('Bunghole', 'savingFile'));
         this.sendRequest("/saveFile", {},
             (data: any) => {
                 if (data.status === 'Success') {
-                    Stingray.savingStatus.saving = true;
-                    Stingray.savingStatus.status = Stingray.i18n.getString('Stingray', 'savingFile');
+                    Bunghole.savingStatus.saving = true;
+                    Bunghole.savingStatus.status = Bunghole.i18n.getString('Bunghole', 'savingFile');
                     let intervalObject = setInterval(() => {
-                        if (Stingray.savingStatus.saving) {
+                        if (Bunghole.savingStatus.saving) {
                             // keep waiting
                         } else {
                             clearInterval(intervalObject);
-                            Stingray.mainWindow.webContents.send('end-waiting');
-                            Stingray.mainWindow.webContents.send('set-status', '');
-                            if (Stingray.savingStatus.saveError !== '') {
-                                dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), Stingray.savingStatus.saveError);
+                            Bunghole.mainWindow.webContents.send('end-waiting');
+                            Bunghole.mainWindow.webContents.send('set-status', '');
+                            if (Bunghole.savingStatus.saveError !== '') {
+                                dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), Bunghole.savingStatus.saveError);
                             } else {
-                                Stingray.saved = true;
-                                Stingray.mainWindow.setDocumentEdited(false);
-                                if (Stingray.shouldQuit) {
+                                Bunghole.saved = true;
+                                Bunghole.mainWindow.setDocumentEdited(false);
+                                if (Bunghole.shouldQuit) {
                                     app.quit();
                                 }
                             }
                         }
-                        Stingray.getSavingStatus();
+                        Bunghole.getSavingStatus();
                     }, 200);
                 } else {
-                    Stingray.mainWindow.webContents.send('end-waiting');
-                    Stingray.mainWindow.webContents.send('set-status', '');
-                    dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), data.reason);
+                    Bunghole.mainWindow.webContents.send('end-waiting');
+                    Bunghole.mainWindow.webContents.send('set-status', '');
+                    dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), data.reason);
                 }
 
             },
             (reason: string) => {
-                dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), reason);
+                dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), reason);
             }
         );
     }
@@ -1524,12 +1469,12 @@ class Stingray {
     static getSavingStatus(): void {
         this.sendRequest('/savingStatus', {},
             (data: any) => {
-                Stingray.savingStatus = data;
+                Bunghole.savingStatus = data;
             },
             (reason: string) => {
-                Stingray.savingStatus.saving = false;
-                Stingray.savingStatus.saveError = reason;
-                Stingray.savingStatus.status = '';
+                Bunghole.savingStatus.saving = false;
+                Bunghole.savingStatus.saveError = reason;
+                Bunghole.savingStatus.status = '';
             }
         );
     }
@@ -1539,24 +1484,24 @@ class Stingray {
             return;
         }
         dialog.showSaveDialog(this.mainWindow, {
-            title: Stingray.i18n.getString('Stingray', 'saveFileAs'),
+            title: Bunghole.i18n.getString('Bunghole', 'saveFileAs'),
             properties: ['createDirectory', 'showOverwriteConfirmation'],
             filters: [
-                { name: Stingray.i18n.getString('Stingray', 'algnFile'), extensions: ['algn'] },
-                { name: Stingray.i18n.getString('Stingray', 'anyFile'), extensions: ['*'] }
+                { name: Bunghole.i18n.getString('Bunghole', 'algnFile'), extensions: ['algn'] },
+                { name: Bunghole.i18n.getString('Bunghole', 'anyFile'), extensions: ['*'] }
             ],
-            defaultPath: Stingray.currentFile
+            defaultPath: Bunghole.currentFile
         }).then((value) => {
             if (!value.canceled) {
                 this.currentFile = value.filePath;
                 this.sendRequest('/renameFile', { file: this.currentFile },
                     (data: any) => {
-                        Stingray.mainWindow.webContents.send('file-renamed', Stingray.currentFile);
-                        Stingray.saveFile();
-                        Stingray.saveRecent(Stingray.currentFile);
+                        Bunghole.mainWindow.webContents.send('file-renamed', Bunghole.currentFile);
+                        Bunghole.saveFile();
+                        Bunghole.saveRecent(Bunghole.currentFile);
                     },
                     (reason: string) => {
-                        dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), reason);
+                        dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), reason);
                     }
                 );
             }
@@ -1570,20 +1515,20 @@ class Stingray {
             return;
         }
         dialog.showSaveDialog(this.mainWindow, {
-            title: Stingray.i18n.getString('Stingray', 'exportTMX'),
+            title: Bunghole.i18n.getString('Bunghole', 'exportTMX'),
             properties: ['createDirectory', 'showOverwriteConfirmation'],
             filters: [
-                { name: Stingray.i18n.getString('Stingray', 'tmxFile'), extensions: ['tmx'] },
-                { name: Stingray.i18n.getString('Stingray', 'anyFile'), extensions: ['*'] }
+                { name: Bunghole.i18n.getString('Bunghole', 'tmxFile'), extensions: ['tmx'] },
+                { name: Bunghole.i18n.getString('Bunghole', 'anyFile'), extensions: ['*'] }
             ]
         }).then((value) => {
             if (!value.canceled) {
                 this.sendRequest("/exportTMX", { file: value.filePath },
                     (data: any) => {
-                        dialog.showMessageBoxSync(Stingray.mainWindow, { type: MessageTypes.info, message: Stingray.i18n.getString('Stingray', 'fileExported') });
+                        dialog.showMessageBoxSync(Bunghole.mainWindow, { type: MessageTypes.info, message: Bunghole.i18n.getString('Bunghole', 'fileExported') });
                     },
                     (reason: string) => {
-                        dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), reason);
+                        dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), reason);
                     }
                 );
             }
@@ -1597,22 +1542,22 @@ class Stingray {
             return;
         }
         dialog.showSaveDialog(this.mainWindow, {
-            title: Stingray.i18n.getString('Stingray', 'exportTabDelimited'),
+            title: Bunghole.i18n.getString('Bunghole', 'exportTabDelimited'),
             properties: ['createDirectory', 'showOverwriteConfirmation'],
             filters: [
-                { name: Stingray.i18n.getString('Stingray', 'tsvFile'), extensions: ['tsv'] },
-                { name: Stingray.i18n.getString('Stingray', 'csvFile'), extensions: ['csv'] },
-                { name: Stingray.i18n.getString('Stingray', 'textFile'), extensions: ['txt'] },
-                { name: Stingray.i18n.getString('Stingray', 'anyFile'), extensions: ['*'] }
+                { name: Bunghole.i18n.getString('Bunghole', 'tsvFile'), extensions: ['tsv'] },
+                { name: Bunghole.i18n.getString('Bunghole', 'csvFile'), extensions: ['csv'] },
+                { name: Bunghole.i18n.getString('Bunghole', 'textFile'), extensions: ['txt'] },
+                { name: Bunghole.i18n.getString('Bunghole', 'anyFile'), extensions: ['*'] }
             ]
         }).then((value) => {
             if (!value.canceled) {
                 this.sendRequest("/exportCSV", { file: value.filePath },
                     (data: any) => {
-                        dialog.showMessageBoxSync(Stingray.mainWindow, { type: MessageTypes.info, message: Stingray.i18n.getString('Stingray', 'fileExported') });
+                        dialog.showMessageBoxSync(Bunghole.mainWindow, { type: MessageTypes.info, message: Bunghole.i18n.getString('Bunghole', 'fileExported') });
                     },
                     (reason: string) => {
-                        dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), reason);
+                        dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), reason);
                     }
                 );
             }
@@ -1626,24 +1571,24 @@ class Stingray {
             return;
         }
         dialog.showSaveDialog(this.mainWindow, {
-            title: Stingray.i18n.getString('Stingray', 'exportExcel'),
+            title: Bunghole.i18n.getString('Bunghole', 'exportExcel'),
             properties: ['createDirectory', 'showOverwriteConfirmation'],
             filters: [
-                { name: Stingray.i18n.getString('Stingray', 'excelFile'), extensions: ['xlsx'] },
-                { name: Stingray.i18n.getString('Stingray', 'anyFile'), extensions: ['*'] }
+                { name: Bunghole.i18n.getString('Bunghole', 'excelFile'), extensions: ['xlsx'] },
+                { name: Bunghole.i18n.getString('Bunghole', 'anyFile'), extensions: ['*'] }
             ]
         }).then((value) => {
             if (!value.canceled) {
                 this.sendRequest("/exportExcel", { file: value.filePath },
                     (data: any) => {
                         if (data.status === 'Success') {
-                            dialog.showMessageBoxSync(Stingray.mainWindow, { type: MessageTypes.info, message: Stingray.i18n.getString('Stingray', 'fileExported') });
+                            dialog.showMessageBoxSync(Bunghole.mainWindow, { type: MessageTypes.info, message: Bunghole.i18n.getString('Bunghole', 'fileExported') });
                         } else {
-                            dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), data.reason);
+                            dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), data.reason);
                         }
                     },
                     (reason: string) => {
-                        dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), reason);
+                        dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), reason);
                     }
                 );
             }
@@ -1656,16 +1601,16 @@ class Stingray {
         if (this.currentFile === '') {
             return;
         }
-        Stingray.mainWindow.webContents.send('start-waiting');
+        Bunghole.mainWindow.webContents.send('start-waiting');
         this.sendRequest("/removeTags", {},
             (data: any) => {
-                Stingray.saved = false;
-                Stingray.mainWindow.setDocumentEdited(true);
-                Stingray.mainWindow.webContents.send('end-waiting');
-                Stingray.mainWindow.webContents.send('refresh-page');
+                Bunghole.saved = false;
+                Bunghole.mainWindow.setDocumentEdited(true);
+                Bunghole.mainWindow.webContents.send('end-waiting');
+                Bunghole.mainWindow.webContents.send('refresh-page');
             },
             (reason: string) => {
-                dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), reason);
+                dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), reason);
             }
         );
     }
@@ -1674,16 +1619,16 @@ class Stingray {
         if (this.currentFile === '') {
             return;
         }
-        Stingray.mainWindow.webContents.send('start-waiting');
+        Bunghole.mainWindow.webContents.send('start-waiting');
         this.sendRequest("/removeDuplicates", {},
             (data: any) => {
-                Stingray.saved = false;
-                Stingray.mainWindow.setDocumentEdited(true);
-                Stingray.mainWindow.webContents.send('end-waiting');
-                Stingray.getFileInfo();
+                Bunghole.saved = false;
+                Bunghole.mainWindow.setDocumentEdited(true);
+                Bunghole.mainWindow.webContents.send('end-waiting');
+                Bunghole.getFileInfo();
             },
             (reason: string) => {
-                dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), reason);
+                dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), reason);
             }
         );
     }
@@ -1710,13 +1655,13 @@ class Stingray {
         this.changeLanguagesWindow.on('closed', () => {
             this.mainWindow.focus();
         });
-        let filePath = Stingray.path.join(app.getAppPath(), 'html', Stingray.appLang, 'changeLanguages.html');
+        let filePath = Bunghole.path.join(app.getAppPath(), 'html', Bunghole.appLang, 'changeLanguages.html');
         let fileUrl: URL = new URL('file://' + filePath);
         this.changeLanguagesWindow.loadURL(fileUrl.href);
         this.changeLanguagesWindow.once('ready-to-show', () => {
             this.changeLanguagesWindow.show();
         });
-        Stingray.setLocation(this.changeLanguagesWindow, 'changeLanguages.html');
+        Bunghole.setLocation(this.changeLanguagesWindow, 'changeLanguages.html');
     }
 
     static replaceText(): void {
@@ -1741,24 +1686,24 @@ class Stingray {
         this.replaceTextWindow.on('closed', () => {
             this.mainWindow.focus();
         });
-        let filePath = Stingray.path.join(app.getAppPath(), 'html', Stingray.appLang, 'searchReplace.html');
+        let filePath = Bunghole.path.join(app.getAppPath(), 'html', Bunghole.appLang, 'searchReplace.html');
         let fileUrl: URL = new URL('file://' + filePath);
         this.replaceTextWindow.loadURL(fileUrl.href);
         this.replaceTextWindow.once('ready-to-show', () => {
             this.replaceTextWindow.show();
         });
-        Stingray.setLocation(this.replaceTextWindow, 'searchReplace.html');
+        Bunghole.setLocation(this.replaceTextWindow, 'searchReplace.html');
     }
 
     static replace(data: any): void {
         this.sendRequest('/replaceText', data,
             (data: any) => {
-                Stingray.saved = false;
-                Stingray.mainWindow.setDocumentEdited(true);
-                Stingray.mainWindow.webContents.send('refresh-page');
+                Bunghole.saved = false;
+                Bunghole.mainWindow.setDocumentEdited(true);
+                Bunghole.mainWindow.webContents.send('refresh-page');
             },
             (reason: string) => {
-                dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), reason);
+                dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), reason);
             }
         );
     }
@@ -1767,49 +1712,49 @@ class Stingray {
         if (this.currentFile === '') {
             return;
         }
-        Stingray.mainWindow.webContents.send('save-edit');
+        Bunghole.mainWindow.webContents.send('save-edit');
     }
 
     static cancelEdit(): void {
         if (this.currentFile === '') {
             return;
         }
-        Stingray.mainWindow.webContents.send('cancel-edit');
+        Bunghole.mainWindow.webContents.send('cancel-edit');
     }
 
     static moveSegmentDown(): void {
         if (this.currentFile === '') {
             return;
         }
-        Stingray.mainWindow.webContents.send('move-down');
+        Bunghole.mainWindow.webContents.send('move-down');
     }
 
     static moveSegmentUp(): void {
         if (this.currentFile === '') {
             return;
         }
-        Stingray.mainWindow.webContents.send('move-up');
+        Bunghole.mainWindow.webContents.send('move-up');
     }
 
     static splitSegment(): void {
         if (this.currentFile === '') {
             return;
         }
-        Stingray.mainWindow.webContents.send('split-segment');
+        Bunghole.mainWindow.webContents.send('split-segment');
     }
 
     static mergeSegment(): void {
         if (this.currentFile === '') {
             return;
         }
-        Stingray.mainWindow.webContents.send('merge-segment');
+        Bunghole.mainWindow.webContents.send('merge-segment');
     }
 
     static removeSegment(): void {
         if (this.currentFile === '') {
             return;
         }
-        Stingray.mainWindow.webContents.send('remove-segment');
+        Bunghole.mainWindow.webContents.send('remove-segment');
     }
 
     static loadRecents(): string[] {
@@ -1848,22 +1793,22 @@ class Stingray {
         let jsonData: any = { files: files };
         writeFile(recentsFile, JSON.stringify(jsonData), (error) => {
             if (error) {
-                dialog.showMessageBoxSync(Stingray.mainWindow, { type: MessageTypes.error, message: error.message });
+                dialog.showMessageBoxSync(Bunghole.mainWindow, { type: MessageTypes.error, message: error.message });
             }
         });
     }
 
     static setLanguages(langs: any): void {
         this.changeLanguagesWindow.close();
-        Stingray.mainWindow.focus();
+        Bunghole.mainWindow.focus();
         this.sendRequest('/setLanguages', langs,
             (data: any) => {
-                Stingray.saved = false;
-                Stingray.mainWindow.setDocumentEdited(true);
-                Stingray.getFileInfo();
+                Bunghole.saved = false;
+                Bunghole.mainWindow.setDocumentEdited(true);
+                Bunghole.getFileInfo();
             },
             (reason: string) => {
-                dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), reason);
+                dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), reason);
             }
         );
     }
@@ -1871,12 +1816,12 @@ class Stingray {
     static saveData(data: any): void {
         this.sendRequest('/saveData', data,
             (data: any) => {
-                Stingray.saved = false;
-                Stingray.mainWindow.setDocumentEdited(true);
-                Stingray.mainWindow.webContents.send('refresh-page');
+                Bunghole.saved = false;
+                Bunghole.mainWindow.setDocumentEdited(true);
+                Bunghole.mainWindow.webContents.send('refresh-page');
             },
             (reason: string) => {
-                dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), reason);
+                dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), reason);
             }
         );
     }
@@ -1884,12 +1829,12 @@ class Stingray {
     static split(data: any): void {
         this.sendRequest('/splitSegment', data,
             (data: any) => {
-                Stingray.saved = false;
-                Stingray.mainWindow.setDocumentEdited(true);
-                Stingray.mainWindow.webContents.send('refresh-page');
+                Bunghole.saved = false;
+                Bunghole.mainWindow.setDocumentEdited(true);
+                Bunghole.mainWindow.webContents.send('refresh-page');
             },
             (reason: string) => {
-                dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), reason);
+                dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), reason);
             }
         );
     }
@@ -1897,12 +1842,12 @@ class Stingray {
     static segmentDown(data: any): void {
         this.sendRequest('/segmentDown', data,
             (data: any) => {
-                Stingray.saved = false;
-                Stingray.mainWindow.setDocumentEdited(true);
-                Stingray.mainWindow.webContents.send('refresh-page');
+                Bunghole.saved = false;
+                Bunghole.mainWindow.setDocumentEdited(true);
+                Bunghole.mainWindow.webContents.send('refresh-page');
             },
             (reason: string) => {
-                dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), reason);
+                dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), reason);
             }
         );
     }
@@ -1910,12 +1855,12 @@ class Stingray {
     static segmentUp(data: any): void {
         this.sendRequest('/segmentUp', data,
             (data: any) => {
-                Stingray.saved = false;
-                Stingray.mainWindow.setDocumentEdited(true);
-                Stingray.mainWindow.webContents.send('refresh-page');
+                Bunghole.saved = false;
+                Bunghole.mainWindow.setDocumentEdited(true);
+                Bunghole.mainWindow.webContents.send('refresh-page');
             },
             (reason: string) => {
-                dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), reason);
+                dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), reason);
             }
         );
     }
@@ -1923,12 +1868,12 @@ class Stingray {
     static mergeNext(data: any): void {
         this.sendRequest('/mergeNext', data,
             (data: any) => {
-                Stingray.saved = false;
-                Stingray.mainWindow.setDocumentEdited(true);
-                Stingray.mainWindow.webContents.send('refresh-page');
+                Bunghole.saved = false;
+                Bunghole.mainWindow.setDocumentEdited(true);
+                Bunghole.mainWindow.webContents.send('refresh-page');
             },
             (reason: string) => {
-                dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), reason);
+                dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), reason);
             }
         );
     }
@@ -1936,19 +1881,181 @@ class Stingray {
     static removeData(data: any): void {
         this.sendRequest('/removeSegment', data,
             (data: any) => {
-                Stingray.saved = false;
-                Stingray.mainWindow.setDocumentEdited(true);
-                Stingray.mainWindow.webContents.send('refresh-page');
+                Bunghole.saved = false;
+                Bunghole.mainWindow.setDocumentEdited(true);
+                Bunghole.mainWindow.webContents.send('refresh-page');
             },
             (reason: string) => {
-                dialog.showErrorBox(Stingray.i18n.getString('Stingray', 'error'), reason);
+                dialog.showErrorBox(Bunghole.i18n.getString('Bunghole', 'error'), reason);
+            }
+        );
+    }
+
+    // ==================== AI REVIEW METHODS ====================
+
+    static showAICostDialog(): void {
+        if (!Bunghole.currentFile) {
+            dialog.showErrorBox('No File Open', 'Please open an alignment file first.');
+            return;
+        }
+
+        // Check if API key is configured
+        if (!Bunghole.currentPreferences.claudeAPIKey || Bunghole.currentPreferences.claudeAPIKey.trim() === '') {
+            dialog.showMessageBox(Bunghole.mainWindow, {
+                type: 'warning',
+                title: 'Claude API Key Required',
+                message: 'Claude API key is not configured.',
+                detail: 'Please set your Claude API key in Preferences before using AI Review.',
+                buttons: ['Open Preferences', 'Cancel']
+            }).then((result) => {
+                if (result.response === 0) {
+                    Bunghole.showSettings();
+                }
+            });
+            return;
+        }
+
+        // Set API key in Java backend
+        this.sendRequest('/setClaudeAPIKey', { apiKey: Bunghole.currentPreferences.claudeAPIKey },
+            (data: any) => {
+                if (data.status === 'Success') {
+                    // Open cost dialog
+                    this.aiCostWindow = new BrowserWindow({
+                        parent: this.mainWindow,
+                        width: 500,
+                        height: 450,
+                        minimizable: false,
+                        maximizable: false,
+                        resizable: false,
+                        show: false,
+                        icon: this.path.join(app.getAppPath(), 'icons', 'icon.png'),
+                        webPreferences: {
+                            nodeIntegration: true,
+                            contextIsolation: false
+                        }
+                    });
+                    this.aiCostWindow.setMenu(null);
+                    let filePath = Bunghole.path.join(app.getAppPath(), 'html', Bunghole.appLang, 'aiCostDialog.html');
+                    let fileUrl: URL = new URL('file://' + filePath);
+                    this.aiCostWindow.loadURL(fileUrl.href);
+                    this.aiCostWindow.once('ready-to-show', () => {
+                        this.aiCostWindow.show();
+                    });
+                    this.aiCostWindow.on('close', () => {
+                        this.mainWindow.focus();
+                    });
+                    Bunghole.setLocation(this.aiCostWindow, 'aiCostDialog.html');
+                } else {
+                    dialog.showErrorBox('Error', 'Failed to set API key: ' + data.reason);
+                }
+            },
+            (reason: string) => {
+                dialog.showErrorBox('Error', 'Failed to set API key: ' + reason);
+            }
+        );
+    }
+
+    static estimateAICost(event: IpcMainEvent): void {
+        this.sendRequest('/estimateAICost', {},
+            (data: any) => {
+                event.sender.send('set-cost-estimate', data);
+            },
+            (reason: string) => {
+                event.sender.send('set-cost-estimate', {
+                    status: 'Error',
+                    reason: reason
+                });
+            }
+        );
+    }
+
+    static proceedWithAI(): void {
+        Bunghole.mainWindow.webContents.send('start-waiting');
+        Bunghole.mainWindow.webContents.send('set-status', 'AI is reviewing alignments...');
+
+        this.sendRequest('/improveWithAI', {},
+            (data: any) => {
+                Bunghole.mainWindow.webContents.send('end-waiting');
+                Bunghole.mainWindow.webContents.send('set-status', '');
+
+                if (this.aiCostWindow) {
+                    this.aiCostWindow.close();
+                }
+
+                if (data.status === 'Success') {
+                    let message = `AI Review Complete!\n\n` +
+                        `Improved pairs: ${data.improved}\n` +
+                        `Remaining uncertain: ${data.remainingUncertain}\n` +
+                        `Overall confidence: ${(data.overallConfidence * 100).toFixed(1)}%`;
+
+                    dialog.showMessageBox(Bunghole.mainWindow, {
+                        type: 'info',
+                        title: 'AI Review Complete',
+                        message: message,
+                        buttons: ['OK']
+                    });
+
+                    // Refresh the page to show updated alignments
+                    Bunghole.mainWindow.webContents.send('refresh-page');
+                    Bunghole.saved = false;
+                    Bunghole.mainWindow.setDocumentEdited(true);
+                } else {
+                    dialog.showErrorBox('AI Review Failed', data.reason || 'Unknown error occurred');
+                }
+            },
+            (reason: string) => {
+                Bunghole.mainWindow.webContents.send('end-waiting');
+                Bunghole.mainWindow.webContents.send('set-status', '');
+
+                if (this.aiCostWindow) {
+                    this.aiCostWindow.close();
+                }
+
+                dialog.showErrorBox('AI Review Failed', reason);
+            }
+        );
+    }
+
+    static toggleManualMark(arg: any): void {
+        this.sendRequest('/toggleManualMark', { segmentId: arg.segmentId },
+            (data: any) => {
+                if (data.status === 'Success') {
+                    // Refresh the current page to show updated badge
+                    Bunghole.mainWindow.webContents.send('refresh-page');
+                    Bunghole.saved = false;
+                    Bunghole.mainWindow.setDocumentEdited(true);
+                } else {
+                    dialog.showErrorBox('Error', data.reason || 'Failed to toggle manual mark');
+                }
+            },
+            (reason: string) => {
+                dialog.showErrorBox('Error', reason);
+            }
+        );
+    }
+
+    static moveTargetSegment(arg: any, direction: 'up' | 'down'): void {
+        const endpoint = direction === 'up' ? '/moveTargetUp' : '/moveTargetDown';
+        this.sendRequest(endpoint, { segmentId: arg.segmentId },
+            (data: any) => {
+                if (data.status === 'Success') {
+                    // Refresh the current page to show reordered segments
+                    Bunghole.mainWindow.webContents.send('refresh-page');
+                    Bunghole.saved = false;
+                    Bunghole.mainWindow.setDocumentEdited(true);
+                } else {
+                    dialog.showErrorBox('Error', data.reason || 'Failed to move segment');
+                }
+            },
+            (reason: string) => {
+                dialog.showErrorBox('Error', reason);
             }
         );
     }
 
 }
 try {
-    new Stingray(process.argv);
+    new Bunghole(process.argv);
 } catch (error) {
     console.error(error);
 }

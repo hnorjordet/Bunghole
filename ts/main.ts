@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008 - 2025 Maxprograms.
+ * Copyright (c) 2008 - 2025 Håvard Nørjordet.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 1.0
@@ -7,7 +7,7 @@
  * https://www.eclipse.org/org/documents/epl-v10.html
  *
  * Contributors:
- *     Maxprograms - initial API and implementation
+ *     Håvard Nørjordet - initial API and implementation
  *******************************************************************************/
 
 class Main {
@@ -33,6 +33,11 @@ class Main {
     topBar: HTMLDivElement;
     mainPanel: HTMLDivElement;
     bottomBar: HTMLDivElement;
+
+    // Hotkey system
+    hoveredRow: HTMLTableRowElement = null;
+    hoveredSegmentId: number = null;
+    hotkeyHelpVisible: boolean = false;
 
     constructor() {
 
@@ -113,7 +118,7 @@ class Main {
             this.getRows();
         });
         this.electron.ipcRenderer.on('file-renamed', (event: Electron.IpcRendererEvent, arg: any) => {
-            document.getElementById('title').innerText = 'Stingray - ' + arg;
+            document.getElementById('title').innerText = 'Bunghole - ' + arg;
         });
 
         document.addEventListener('paste', (event) => {
@@ -130,6 +135,9 @@ class Main {
                 }
             }
         });
+
+        // Hotkey system
+        this.setupHotkeySystem();
     }
 
     hasTags(html: string): boolean {
@@ -252,6 +260,10 @@ class Main {
             this.removeSegment();
         });
 
+        document.getElementById('aiReview').addEventListener('click', () => {
+            this.electron.ipcRenderer.send('ai-review');
+        });
+
         document.getElementById('export').addEventListener('click', () => {
             this.electron.ipcRenderer.send('export-tmx');
         });
@@ -324,7 +336,7 @@ class Main {
     }
 
     setFileInfo(data: any) {
-        document.getElementById('title').innerText = 'Stingray - ' + data.file;
+        document.getElementById('title').innerText = 'Bunghole - ' + data.file;
         this.sourceRows = data.srcRows;
         this.targetRows = data.tgtRows;
 
@@ -343,7 +355,7 @@ class Main {
     }
 
     clearFile(): void {
-        document.getElementById('title').innerText = 'Stingray';
+        document.getElementById('title').innerText = 'Bunghole';
         document.getElementById('sourceHeader').innerText = 'Source';
         document.getElementById('targetHeader').innerText = 'Target';
         document.getElementById('tableBody').innerHTML = '';
@@ -426,6 +438,13 @@ class Main {
             html = html + rows[i];
         }
         document.getElementById('tableBody').innerHTML = html;
+
+        // Add hover tracking for hotkeys
+        const tableRows = document.querySelectorAll('#tableBody tr[id]') as NodeListOf<HTMLTableRowElement>;
+        for (let row of tableRows) {
+            this.trackRowHover(row);
+        }
+
         let cells: HTMLCollectionOf<Element> = document.getElementsByClassName('cell');
         for (let cell of cells) {
             cell.addEventListener('click', (ev: MouseEvent) => {
@@ -436,6 +455,11 @@ class Main {
         for (let cell of fixed) {
             cell.addEventListener('click', (ev: MouseEvent) => {
                 this.fixedListener(ev);
+            });
+            // Add context menu for marking uncertain segments
+            cell.addEventListener('contextmenu', (ev: MouseEvent) => {
+                ev.preventDefault();
+                this.showSegmentContextMenu(ev, cell);
             });
         }
         this.sourceRows = data.srcRows;
@@ -717,6 +741,402 @@ class Main {
             let lang = this.currentLang;
             this.cancelEdit();
             this.electron.ipcRenderer.send('remove-data', { id: id, lang: lang });
+        }
+    }
+
+    showSegmentContextMenu(ev: MouseEvent, cell: Element): void {
+        const row = (cell as HTMLElement).closest('tr');
+        if (!row) return;
+
+        const segmentId = parseInt(row.id);
+        const isManual = row.hasAttribute('data-manual');
+
+        // Create context menu
+        const menu = document.createElement('div');
+        menu.className = 'context-menu';
+        menu.style.position = 'fixed';
+        menu.style.left = ev.clientX + 'px';
+        menu.style.top = ev.clientY + 'px';
+
+        // Toggle manual mark option
+        const toggleOption = document.createElement('div');
+        toggleOption.className = 'context-menu-item';
+        toggleOption.textContent = isManual ? '✓ Marked for AI Review' : 'Mark for AI Review';
+        toggleOption.onclick = () => {
+            this.toggleManualMark(segmentId);
+            document.body.removeChild(menu);
+        };
+        menu.appendChild(toggleOption);
+
+        // Separator
+        const separator = document.createElement('div');
+        separator.className = 'context-menu-separator';
+        menu.appendChild(separator);
+
+        // Move target up option
+        const moveUpOption = document.createElement('div');
+        moveUpOption.className = 'context-menu-item';
+        if (segmentId === 0) {
+            moveUpOption.setAttribute('disabled', 'true');
+            moveUpOption.style.cursor = 'not-allowed';
+            moveUpOption.style.color = '#999';
+        }
+        moveUpOption.textContent = '↑ Move Target Up';
+        moveUpOption.onclick = () => {
+            if (segmentId > 0) {
+                this.moveTargetSegment(segmentId, 'up');
+                document.body.removeChild(menu);
+            }
+        };
+        menu.appendChild(moveUpOption);
+
+        // Move target down option
+        const moveDownOption = document.createElement('div');
+        moveDownOption.className = 'context-menu-item';
+        moveDownOption.textContent = '↓ Move Target Down';
+        moveDownOption.onclick = () => {
+            this.moveTargetSegment(segmentId, 'down');
+            document.body.removeChild(menu);
+        };
+        menu.appendChild(moveDownOption);
+
+        // Add to body
+        document.body.appendChild(menu);
+
+        // Remove menu on outside click
+        const removeMenu = (e: MouseEvent) => {
+            if (!menu.contains(e.target as Node)) {
+                if (document.body.contains(menu)) {
+                    document.body.removeChild(menu);
+                }
+                document.removeEventListener('click', removeMenu);
+            }
+        };
+        setTimeout(() => document.addEventListener('click', removeMenu), 10);
+    }
+
+    toggleManualMark(segmentId: number): void {
+        this.electron.ipcRenderer.send('toggle-manual-mark', { segmentId });
+    }
+
+    moveTargetSegment(segmentId: number, direction: 'up' | 'down'): void {
+        const endpoint = direction === 'up' ? 'move-target-up' : 'move-target-down';
+        this.electron.ipcRenderer.send(endpoint, { segmentId });
+    }
+
+    // ============================================================
+    // Hotkey System
+    // ============================================================
+
+    setupHotkeySystem(): void {
+        // Global keyboard listener
+        document.addEventListener('keydown', (ev: KeyboardEvent) => {
+            this.handleHotkey(ev);
+        });
+
+        // We'll add hover tracking when rows are created in setRows()
+    }
+
+    handleHotkey(ev: KeyboardEvent): void {
+        // Don't trigger hotkeys when typing in input fields or contenteditable
+        const target = ev.target as HTMLElement;
+        if (target.tagName === 'INPUT' ||
+            target.tagName === 'TEXTAREA' ||
+            target.isContentEditable) {
+            return;
+        }
+
+        const key = ev.key.toLowerCase();
+        const ctrlOrCmd = ev.ctrlKey || ev.metaKey;
+
+        // Global hotkeys (no hover required)
+        if (key === '?' || (key === 'h' && !this.hoveredRow)) {
+            ev.preventDefault();
+            this.toggleHotkeyHelp();
+            return;
+        }
+
+        if (key === 'escape') {
+            ev.preventDefault();
+            if (this.hotkeyHelpVisible) {
+                this.hideHotkeyHelp();
+            }
+            return;
+        }
+
+        if (key === 'n' && !ctrlOrCmd) {
+            ev.preventDefault();
+            this.jumpToNextUncertain();
+            return;
+        }
+
+        if (key === 'p' && !ctrlOrCmd) {
+            ev.preventDefault();
+            this.jumpToPreviousUncertain();
+            return;
+        }
+
+        if (key === 'r' && ctrlOrCmd) {
+            ev.preventDefault();
+            this.electron.ipcRenderer.send('show-ai-cost-dialog');
+            return;
+        }
+
+        if (key === 's' && ctrlOrCmd) {
+            ev.preventDefault();
+            this.electron.ipcRenderer.send('save-file');
+            return;
+        }
+
+        // Hover-based hotkeys (require hovering over a row)
+        if (!this.hoveredRow || this.hoveredSegmentId === null) {
+            return;
+        }
+
+        switch (key) {
+            case 'm':
+                ev.preventDefault();
+                this.toggleManualMark(this.hoveredSegmentId);
+                break;
+
+            case 'u':
+                ev.preventDefault();
+                if (this.hoveredSegmentId > 0) {
+                    this.moveTargetSegment(this.hoveredSegmentId, 'up');
+                }
+                break;
+
+            case 'd':
+                ev.preventDefault();
+                this.moveTargetSegment(this.hoveredSegmentId, 'down');
+                break;
+        }
+    }
+
+    trackRowHover(row: HTMLTableRowElement): void {
+        row.addEventListener('mouseenter', () => {
+            this.hoveredRow = row;
+            this.hoveredSegmentId = parseInt(row.id);
+            row.classList.add('hovered-for-hotkey');
+        });
+
+        row.addEventListener('mouseleave', () => {
+            if (this.hoveredRow === row) {
+                this.hoveredRow = null;
+                this.hoveredSegmentId = null;
+                row.classList.remove('hovered-for-hotkey');
+            }
+        });
+    }
+
+    jumpToNextUncertain(): void {
+        const table = document.getElementById('dataTable') as HTMLTableElement;
+        if (!table) return;
+
+        const rows = Array.from(table.querySelectorAll('tr[id]')) as HTMLTableRowElement[];
+
+        // Find current position
+        let startIndex = 0;
+        if (this.hoveredRow) {
+            const currentId = parseInt(this.hoveredRow.id);
+            startIndex = rows.findIndex(r => parseInt(r.id) === currentId) + 1;
+        }
+
+        // Search from current position forward
+        for (let i = startIndex; i < rows.length; i++) {
+            if (this.isUncertainRow(rows[i])) {
+                this.scrollToAndHighlight(rows[i]);
+                return;
+            }
+        }
+
+        // Wrap around to beginning
+        for (let i = 0; i < startIndex; i++) {
+            if (this.isUncertainRow(rows[i])) {
+                this.scrollToAndHighlight(rows[i]);
+                return;
+            }
+        }
+
+        // No uncertain rows found
+        this.showTemporaryMessage('No uncertain segments found');
+    }
+
+    jumpToPreviousUncertain(): void {
+        const table = document.getElementById('dataTable') as HTMLTableElement;
+        if (!table) return;
+
+        const rows = Array.from(table.querySelectorAll('tr[id]')) as HTMLTableRowElement[];
+
+        // Find current position
+        let startIndex = rows.length - 1;
+        if (this.hoveredRow) {
+            const currentId = parseInt(this.hoveredRow.id);
+            startIndex = rows.findIndex(r => parseInt(r.id) === currentId) - 1;
+        }
+
+        // Search from current position backward
+        for (let i = startIndex; i >= 0; i--) {
+            if (this.isUncertainRow(rows[i])) {
+                this.scrollToAndHighlight(rows[i]);
+                return;
+            }
+        }
+
+        // Wrap around to end
+        for (let i = rows.length - 1; i > startIndex; i--) {
+            if (this.isUncertainRow(rows[i])) {
+                this.scrollToAndHighlight(rows[i]);
+                return;
+            }
+        }
+
+        // No uncertain rows found
+        this.showTemporaryMessage('No uncertain segments found');
+    }
+
+    isUncertainRow(row: HTMLTableRowElement): boolean {
+        return row.classList.contains('confidence-low') ||
+               row.classList.contains('confidence-medium') ||
+               row.classList.contains('confidence-manual');
+    }
+
+    scrollToAndHighlight(row: HTMLTableRowElement): void {
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        // Pulse highlight effect
+        row.classList.add('jump-highlight');
+        setTimeout(() => {
+            row.classList.remove('jump-highlight');
+        }, 1500);
+    }
+
+    showTemporaryMessage(message: string): void {
+        const existing = document.getElementById('temporary-message');
+        if (existing) {
+            existing.remove();
+        }
+
+        const msg = document.createElement('div');
+        msg.id = 'temporary-message';
+        msg.className = 'temporary-message';
+        msg.textContent = message;
+        document.body.appendChild(msg);
+
+        setTimeout(() => {
+            msg.classList.add('fade-out');
+            setTimeout(() => msg.remove(), 300);
+        }, 2000);
+    }
+
+    toggleHotkeyHelp(): void {
+        if (this.hotkeyHelpVisible) {
+            this.hideHotkeyHelp();
+        } else {
+            this.showHotkeyHelp();
+        }
+    }
+
+    showHotkeyHelp(): void {
+        const existing = document.getElementById('hotkey-help');
+        if (existing) return;
+
+        const overlay = document.createElement('div');
+        overlay.id = 'hotkey-help';
+        overlay.className = 'hotkey-help-overlay';
+
+        overlay.innerHTML = `
+            <div class="hotkey-help-content">
+                <h2>Keyboard Shortcuts</h2>
+
+                <div class="hotkey-section">
+                    <h3>Hover + Key Actions</h3>
+                    <p class="hotkey-description">Hover your mouse over any row, then press:</p>
+                    <div class="hotkey-list">
+                        <div class="hotkey-item">
+                            <kbd>M</kbd>
+                            <span>Mark/unmark for AI review</span>
+                        </div>
+                        <div class="hotkey-item">
+                            <kbd>U</kbd>
+                            <span>Move target segment up</span>
+                        </div>
+                        <div class="hotkey-item">
+                            <kbd>D</kbd>
+                            <span>Move target segment down</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hotkey-section">
+                    <h3>Navigation</h3>
+                    <div class="hotkey-list">
+                        <div class="hotkey-item">
+                            <kbd>N</kbd>
+                            <span>Jump to next uncertain segment</span>
+                        </div>
+                        <div class="hotkey-item">
+                            <kbd>P</kbd>
+                            <span>Jump to previous uncertain segment</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hotkey-section">
+                    <h3>Actions</h3>
+                    <div class="hotkey-list">
+                        <div class="hotkey-item">
+                            <kbd>Cmd/Ctrl</kbd> + <kbd>R</kbd>
+                            <span>Run AI review</span>
+                        </div>
+                        <div class="hotkey-item">
+                            <kbd>Cmd/Ctrl</kbd> + <kbd>S</kbd>
+                            <span>Save file</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hotkey-section">
+                    <h3>Help</h3>
+                    <div class="hotkey-list">
+                        <div class="hotkey-item">
+                            <kbd>?</kbd> or <kbd>H</kbd>
+                            <span>Show this help</span>
+                        </div>
+                        <div class="hotkey-item">
+                            <kbd>Esc</kbd>
+                            <span>Close help / Clear selection</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hotkey-footer">
+                    <button id="close-hotkey-help">Close</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+        this.hotkeyHelpVisible = true;
+
+        // Click outside to close
+        overlay.addEventListener('click', (ev: MouseEvent) => {
+            if (ev.target === overlay) {
+                this.hideHotkeyHelp();
+            }
+        });
+
+        // Close button
+        document.getElementById('close-hotkey-help').addEventListener('click', () => {
+            this.hideHotkeyHelp();
+        });
+    }
+
+    hideHotkeyHelp(): void {
+        const overlay = document.getElementById('hotkey-help');
+        if (overlay) {
+            overlay.remove();
+            this.hotkeyHelpVisible = false;
         }
     }
 }

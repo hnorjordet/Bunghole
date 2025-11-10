@@ -23,3 +23,275 @@ footer {
     vertical-align: bottom;
 }
 
+/* Confidence badges for AI-enhanced alignment */
+.confidence-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-weight: bold;
+    margin-left: 8px;
+    vertical-align: middle;
+    cursor: help;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    min-width: 20px;
+    text-align: center;
+}
+
+.confidence-badge:hover {
+    transform: scale(1.2);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Special badges for AI-reviewed and manual */
+.confidence-ai-reviewed {
+    background-color: #2196f3 !important;
+    color: white !important;
+}
+
+.confidence-manual {
+    background-color: #ff9800 !important;
+    color: white !important;
+}
+
+/* Row highlighting for uncertain segments */
+tr.confidence-low,
+tr.confidence-medium,
+tr.confidence-manual {
+    background-color: rgba(255, 152, 0, 0.05);
+}
+
+tr.confidence-ai-reviewed {
+    background-color: rgba(33, 150, 243, 0.05);
+}
+
+/* Badge positioning in row number cell */
+.fixed .confidence-badge {
+    margin-left: 8px;
+    cursor: help;
+}
+
+/* Context menu styling */
+.context-menu {
+    position: fixed;
+    background-color: #2d2d2d;
+    color: #ffffff;
+    border: 1px solid #555;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    padding: 4px 0;
+    z-index: 10000;
+    min-width: 180px;
+}
+
+.context-menu-item {
+    padding: 8px 16px;
+    cursor: pointer;
+    color: #ffffff;
+}
+
+.context-menu-item:hover {
+    background-color: #3d3d3d;
+}
+
+.context-menu-item[disabled] {
+    color: #999;
+    cursor: not-allowed;
+}
+
+.context-menu-separator {
+    height: 1px;
+    background-color: #555;
+    margin: 4px 0;
+}
+
+/* ===================================================== */
+/* Hotkey System Styles */
+/* ===================================================== */
+
+/* Hover state for hotkey-enabled rows */
+tr.hovered-for-hotkey {
+    background-color: rgba(66, 165, 245, 0.15) !important;
+    box-shadow: inset 0 0 0 2px rgba(66, 165, 245, 0.5);
+    transition: all 0.15s ease;
+}
+
+/* Jump highlight animation when navigating with N/P keys */
+@keyframes pulse-highlight {
+    0%, 100% {
+        box-shadow: inset 0 0 0 2px rgba(76, 175, 80, 0.3);
+        background-color: rgba(76, 175, 80, 0.1);
+    }
+    50% {
+        box-shadow: inset 0 0 0 3px rgba(76, 175, 80, 0.8);
+        background-color: rgba(76, 175, 80, 0.2);
+    }
+}
+
+tr.jump-highlight {
+    animation: pulse-highlight 1.5s ease-in-out;
+}
+
+/* Temporary message (for "No uncertain segments found" etc) */
+.temporary-message {
+    position: fixed;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(50, 50, 50, 0.95);
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 14px;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    animation: fade-in 0.3s ease;
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+.temporary-message.fade-out {
+    animation: fade-out 0.3s ease forwards;
+}
+
+@keyframes fade-out {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+/* Hotkey help overlay */
+.hotkey-help-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fade-in 0.2s ease;
+}
+
+.hotkey-help-content {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+    border-radius: 12px;
+    padding: 32px;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.hotkey-help-content h2 {
+    margin: 0 0 24px 0;
+    font-size: 28px;
+    font-weight: 600;
+    color: #42a5f5;
+    border-bottom: 2px solid #42a5f5;
+    padding-bottom: 12px;
+}
+
+.hotkey-section {
+    margin-bottom: 28px;
+}
+
+.hotkey-section h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+    color: #90caf9;
+}
+
+.hotkey-description {
+    font-size: 14px;
+    color: #bbb;
+    margin: 0 0 12px 0;
+    font-style: italic;
+}
+
+.hotkey-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.hotkey-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 12px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    transition: background-color 0.2s;
+}
+
+.hotkey-item:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.hotkey-item kbd {
+    display: inline-block;
+    min-width: 40px;
+    padding: 6px 12px;
+    font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    background: linear-gradient(180deg, #4a4a4a 0%, #3a3a3a 100%);
+    color: #fff;
+    border: 1px solid #555;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.hotkey-item span {
+    flex: 1;
+    font-size: 14px;
+    color: #e0e0e0;
+}
+
+.hotkey-footer {
+    margin-top: 32px;
+    padding-top: 20px;
+    border-top: 1px solid #444;
+    text-align: center;
+}
+
+.hotkey-footer button {
+    padding: 10px 32px;
+    font-size: 15px;
+    font-weight: 600;
+    background-color: #42a5f5;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.hotkey-footer button:hover {
+    background-color: #1e88e5;
+}
+
+.hotkey-footer button:active {
+    transform: translateY(1px);
+}
+

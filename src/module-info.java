@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008 - 2025 Maxprograms.
+ * Copyright (c) 2008 - 2025 Håvard Nørjordet.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 1.0
@@ -7,12 +7,12 @@
  * https://www.eclipse.org/org/documents/epl-v10.html
  *
  * Contributors:
- *     Maxprograms - initial API and implementation
+ *     Håvard Nørjordet - initial API and implementation
  *******************************************************************************/
 
-module stingray {
-	
-	exports com.maxprograms.stingray;
+module bunghole {
+
+	exports com.maxprograms.bunghole;
 	
 	requires javabcp47;
 	requires java.base;

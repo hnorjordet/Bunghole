@@ -9,8 +9,40 @@ package-lock.json
 /lib/
 /out/
 /release
-/Stingray-darwin-x64/
-/Stingray-win32-x64/
+/Bunghole-darwin-x64/
+/Bunghole-win32-x64/
 .scannerwork
 sonarqube.sh
 sonar-project.properties
+
+# Configuration files (may contain sensitive data)
+config.properties
+*.log
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+
+# Build artifacts
+/dist/
+*.jar
+*.war
+*.ear
+*.zip
+*.dmg
+*.pkg
+*.app
+.electron-builder-cache/
+
+# Security and credentials
+.env
+.env.local
+credentials.json
+api-keys.txt
+
+# OS files
+Thumbs.db
+*.swp
+*.swo
+*~

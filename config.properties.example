@@ -1,0 +1,38 @@
+# Bunghole Configuration File
+# Copy this file to config.properties and adjust values as needed
+
+# Server Configuration
+server.port=8040
+server.bindAddress=127.0.0.1
+server.minThreads=3
+server.maxThreads=10
+server.threadTimeout=20
+server.queueSize=100
+
+# AI Provider Selection
+# Choose: claude or openai
+ai.provider=claude
+
+# Claude API Configuration
+claude.apiKey=
+claude.apiUrl=https://api.anthropic.com/v1/messages
+claude.model=claude-sonnet-4-20250514
+# Pricing per million tokens (update as needed)
+claude.inputPrice=3.0
+claude.outputPrice=15.0
+
+# OpenAI API Configuration
+openai.apiKey=
+openai.apiUrl=https://api.openai.com/v1/chat/completions
+openai.model=gpt-4-turbo-preview
+# Pricing per million tokens (update as needed)
+# GPT-4 Turbo pricing as of 2025
+openai.inputPrice=10.0
+openai.outputPrice=30.0
+
+# Application Mode
+# Set to "development" for debug logging, "production" for normal operation
+bunghole.mode=production
+
+# Logging Configuration
+logging.level=INFO

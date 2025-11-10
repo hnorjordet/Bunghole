@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>AI Review - Cost Confirmation</title>
+    <link id="theme" rel="stylesheet" type="text/css" href="../../css/light.css">
+    <link rel="stylesheet" type="text/css" href="../../css/fonts.css">
+    <style>
+        .cost-info {
+            background-color: var(--dialog-background);
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .cost-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+        }
+        .cost-total {
+            font-weight: bold;
+            font-size: 1.1em;
+            border-top: 1px solid var(--border-color);
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+        .warning {
+            color: var(--warning-color);
+            font-size: 0.9em;
+            font-style: italic;
+            margin-top: 10px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            display: none;
+        }
+        .status.info {
+            background-color: var(--info-background);
+            display: block;
+        }
+        .status.error {
+            background-color: var(--error-background);
+            display: block;
+        }
+    </style>
+</head>
+
+<body class="dialogBody" onload="new AICostDialog();">
+
+    <h3>AI-Enhanced Alignment Review</h3>
+
+    <div id="statusMessage" class="status"></div>
+
+    <div id="costInfo" class="cost-info">
+        <div class="cost-row">
+            <span>Alignment pairs to review:</span>
+            <span id="pairsCount">-</span>
+        </div>
+        <div class="cost-row">
+            <span>Input tokens:</span>
+            <span id="inputTokens">-</span>
+        </div>
+        <div class="cost-row">
+            <span>Estimated output tokens:</span>
+            <span id="outputTokens">-</span>
+        </div>
+        <div class="cost-row cost-total">
+            <span>Estimated cost:</span>
+            <span id="estimatedCost">-</span>
+        </div>
+    </div>
+
+    <div id="breakdown" style="margin: 15px 0; font-size: 0.9em; color: var(--secondary-text);"></div>
+
+    <div class="warning">
+        ⚠️ Only uncertain alignments (confidence < 75%) will be sent to Claude AI.
+    </div>
+
+    <div class="buttonArea">
+        <button id="proceed" class="dark">Proceed with AI Review</button>
+        <button id="cancel">Cancel</button>
+    </div>
+
+    <script src="../../js/aiCostDialog.js"></script>
+</body>
+
+</html>

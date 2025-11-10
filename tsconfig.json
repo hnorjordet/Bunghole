@@ -4,7 +4,7 @@
         "moduleResolution": "node",
         "module": "CommonJS",
         "noImplicitAny": true,
-        "sourceMap": false,
+        "sourceMap": true,
         "outDir": "js",
         "baseUrl": ".",
         "paths": {
@@ -14,6 +14,9 @@
         },
         "forceConsistentCasingInFileNames": true,
         "strict": false,
+        "strictNullChecks": false,
+        "noUnusedLocals": false,
+        "noUnusedParameters": false,
         "esModuleInterop": true
     },
     "include": [

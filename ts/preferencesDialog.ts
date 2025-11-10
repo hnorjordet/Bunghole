@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008 - 2025 Maxprograms.
+ * Copyright (c) 2008 - 2025 Håvard Nørjordet.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 1.0
@@ -7,7 +7,7 @@
  * https://www.eclipse.org/org/documents/epl-v10.html
  *
  * Contributors:
- *     Maxprograms - initial API and implementation
+ *     Håvard Nørjordet - initial API and implementation
  *******************************************************************************/
 
 class PreferencesDialog {
@@ -33,6 +33,12 @@ class PreferencesDialog {
             (document.getElementById('tgtLangSelect') as HTMLSelectElement).value = arg.tgtLang;
             (document.getElementById('defaultSRX') as HTMLInputElement).value = arg.srx;
             (document.getElementById('defaultCatalog') as HTMLInputElement).value = arg.catalog;
+            if (arg.claudeAPIKey) {
+                (document.getElementById('claudeAPIKey') as HTMLInputElement).value = arg.claudeAPIKey;
+            }
+            if (arg.enableAI !== undefined) {
+                (document.getElementById('enableAI') as HTMLInputElement).checked = arg.enableAI;
+            }
         });
         document.addEventListener('keydown', (event: KeyboardEvent) => {
             if (event.key === 'Escape') {
@@ -80,7 +86,9 @@ class PreferencesDialog {
             appLang: (document.getElementById('appLangSelect') as HTMLSelectElement).value,
             theme: ((document.getElementById('themeColor') as HTMLSelectElement).value as "system" | "light" | "dark"),
             catalog: (document.getElementById('defaultCatalog') as HTMLInputElement).value,
-            srx: (document.getElementById('defaultSRX') as HTMLInputElement).value
+            srx: (document.getElementById('defaultSRX') as HTMLInputElement).value,
+            claudeAPIKey: (document.getElementById('claudeAPIKey') as HTMLInputElement).value,
+            enableAI: (document.getElementById('enableAI') as HTMLInputElement).checked
         }
         this.electron.ipcRenderer.send('save-preferences', prefs);
     }

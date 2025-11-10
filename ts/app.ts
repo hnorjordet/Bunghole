@@ -25,6 +25,7 @@ app.name = 'Bunghole';
 if (app.setName) {
     app.setName('Bunghole');
 }
+console.log('App name set to:', app.getName());
 
 class Bunghole {
 
@@ -548,7 +549,8 @@ class Bunghole {
                 new MenuItem({ type: 'separator' }),
                 new MenuItem({ label: Bunghole.i18n.getString('menu', 'quitMac'), accelerator: 'Cmd+Q', role: 'quit', click: () => { app.quit(); } })
             ]);
-            template.unshift(new MenuItem({ label: 'Bunghole', role: 'appMenu', submenu: appleMenu }));
+            // Don't use 'appMenu' role as it forces Electron's app name
+            template.unshift(new MenuItem({ label: app.getName(), submenu: appleMenu }));
         } else {
             let help: MenuItem = template.pop();
             template.push(new MenuItem({

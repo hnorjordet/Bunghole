@@ -29,8 +29,19 @@ fi
 echo "Converting BUNGHOLE_USER_GUIDE.md to PDF..."
 echo ""
 
+# Add MacTeX to PATH if it exists
+if [ -d "/Library/TeX/texbin" ]; then
+    export PATH="/Library/TeX/texbin:$PATH"
+fi
+
+# Create temporary file without emojis for LaTeX compatibility
+echo "Removing emojis and special characters for LaTeX compatibility..."
+# Remove ALL emojis and special unicode characters that LaTeX can't handle
+# First remove variation selectors and zero-width joiners
+sed -e 's/︎//g' -e 's/️//g' -e 's/‍//g' -e 's/📄//g' -e 's/✅/[YES]/g' -e 's/❌/[NO]/g' -e 's/☑/[x]/g' -e 's/☐/[ ]/g' -e 's/🟢/**/g' -e 's/🟡/**/g' -e 's/🔴/**/g' -e 's/🔵/**/g' -e 's/✂️//g' -e 's/✂//g' -e 's/🔗//g' -e 's/🏷️//g' -e 's/🏷//g' -e 's/🌐//g' -e 's/💡/TIP:/g' -e 's/⚠️//g' -e 's/⚠/WARNING:/g' -e 's/📧//g' -e 's/🚀//g' -e 's/🎯//g' -e 's/🐛//g' -e 's/🔄//g' -e 's/📦//g' -e 's/🧪//g' -e 's/📋//g' -e 's/📊//g' -e 's/📞//g' -e 's/🎉//g' -e 's/🔍//g' -e 's/🗂//g' -e 's/✓/[OK]/g' -e 's/✗/[X]/g' -e 's/→/->/g' -e 's/←/<-/g' -e 's/↑/^/g' -e 's/↓/v/g' -e 's/↕/|/g' -e 's/–/-/g' -e 's/—/-/g' -e 's/"/"/g' -e 's/"/"/g' -e "s/'/'/g" -e "s/'/'/g" -e 's/…/.../g' -e "s/´/'/g" -e 's/≥/>=/g' -e 's/≤/<=/g' -e 's/≠/!=/g' -e 's/≈/~=/g' -e 's/±/+-/g' -e 's/×/x/g' -e 's/÷/\//g' BUNGHOLE_USER_GUIDE.md > BUNGHOLE_USER_GUIDE_temp.md
+
 # Generate PDF with pandoc
-pandoc BUNGHOLE_USER_GUIDE.md \
+pandoc BUNGHOLE_USER_GUIDE_temp.md \
     -o bunghole_en.pdf \
     --pdf-engine=pdflatex \
     --variable geometry:margin=1in \
@@ -40,15 +51,17 @@ pandoc BUNGHOLE_USER_GUIDE.md \
     --variable toccolor=black \
     --toc \
     --toc-depth=2 \
-    --highlight-style=tango \
     --metadata title="Bunghole User Guide" \
-    --metadata author="Maxprograms" \
+    --metadata author="Håvard Nørjordet" \
     --metadata date="$(date '+%B %Y')" \
     2>&1
 
 if [ $? -eq 0 ]; then
     echo "✓ Successfully generated bunghole_en.pdf"
     echo ""
+
+    # Clean up temporary file
+    rm -f BUNGHOLE_USER_GUIDE_temp.md
 
     # Backup old PDFs
     if [ -f "stingray_en.pdf" ]; then
@@ -69,6 +82,8 @@ if [ $? -eq 0 ]; then
 else
     echo "✗ Error generating PDF"
     echo ""
+    # Clean up temporary file on error too
+    rm -f BUNGHOLE_USER_GUIDE_temp.md
     echo "If you see LaTeX errors, you may need to install additional packages:"
     echo "  brew install --cask mactex-no-gui  # macOS"
     echo "  sudo apt-get install texlive-full  # Ubuntu/Debian"

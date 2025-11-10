@@ -20,6 +20,11 @@ import { Locations, Point } from "./locations";
 import { MessageTypes } from "./messageTypes";
 import { Updater } from "./updater";
 
+// Set app name early for macOS menu
+if (process.platform === 'darwin') {
+    app.name = 'Bunghole';
+}
+
 class Bunghole {
 
     static path = require('path');

@@ -20,9 +20,10 @@ import { Locations, Point } from "./locations";
 import { MessageTypes } from "./messageTypes";
 import { Updater } from "./updater";
 
-// Set app name early for macOS menu
-if (process.platform === 'darwin') {
-    app.name = 'Bunghole';
+// Set app name for all platforms (especially important for macOS menu bar)
+app.name = 'Bunghole';
+if (app.setName) {
+    app.setName('Bunghole');
 }
 
 class Bunghole {
@@ -71,11 +72,6 @@ class Bunghole {
     static appLang: string = 'en';
 
     constructor(args: string[]) {
-        // Set app name for macOS menu bar
-        if (process.platform === 'darwin') {
-            app.name = 'Bunghole';
-        }
-
         if (!app.requestSingleInstanceLock()) {
             app.quit();
         } else {

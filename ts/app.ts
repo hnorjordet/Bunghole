@@ -549,8 +549,8 @@ class Bunghole {
                 new MenuItem({ type: 'separator' }),
                 new MenuItem({ label: Bunghole.i18n.getString('menu', 'quitMac'), accelerator: 'Cmd+Q', role: 'quit', click: () => { app.quit(); } })
             ]);
-            // Don't use 'appMenu' role as it forces Electron's app name
-            template.unshift(new MenuItem({ label: app.getName(), submenu: appleMenu }));
+            // Explicitly set label to 'Bunghole' for macOS app menu
+            template.unshift(new MenuItem({ label: 'Bunghole', submenu: appleMenu }));
         } else {
             let help: MenuItem = template.pop();
             template.push(new MenuItem({

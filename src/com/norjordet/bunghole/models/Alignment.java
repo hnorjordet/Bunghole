@@ -10,7 +10,7 @@
  *     Håvard Nørjordet - initial API and implementation
  *******************************************************************************/
 
-package com.maxprograms.bunghole.models;
+package com.norjordet.bunghole.models;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileOutputStream;
@@ -39,9 +39,9 @@ import org.xml.sax.SAXException;
 
 import com.maxprograms.languages.Language;
 import com.maxprograms.languages.LanguageUtils;
-import com.maxprograms.bunghole.Constants;
-import com.maxprograms.bunghole.excel.ExcelWriter;
-import com.maxprograms.bunghole.excel.Sheet;
+import com.norjordet.bunghole.Constants;
+import com.norjordet.bunghole.excel.ExcelWriter;
+import com.norjordet.bunghole.excel.Sheet;
 import com.maxprograms.xml.Document;
 import com.maxprograms.xml.Element;
 import com.maxprograms.xml.Indenter;

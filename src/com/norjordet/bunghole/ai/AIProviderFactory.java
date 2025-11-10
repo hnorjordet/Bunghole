@@ -10,9 +10,9 @@
  *     Håvard Nørjordet - initial API and implementation
  *******************************************************************************/
 
-package com.maxprograms.bunghole.ai;
+package com.norjordet.bunghole.ai;
 
-import com.maxprograms.bunghole.Configuration;
+import com.norjordet.bunghole.Configuration;
 
 /**
  * Factory for creating AI provider instances

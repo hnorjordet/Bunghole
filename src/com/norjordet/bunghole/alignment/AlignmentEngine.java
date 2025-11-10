@@ -10,7 +10,7 @@
  *     Håvard Nørjordet - initial API and implementation
  *******************************************************************************/
 
-package com.maxprograms.bunghole.alignment;
+package com.norjordet.bunghole.alignment;
 
 import java.io.IOException;
 import java.lang.System.Logger;

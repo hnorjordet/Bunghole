@@ -12,7 +12,7 @@
 
 module bunghole {
 
-	exports com.maxprograms.bunghole;
+	exports com.norjordet.bunghole;
 	
 	requires javabcp47;
 	requires java.base;

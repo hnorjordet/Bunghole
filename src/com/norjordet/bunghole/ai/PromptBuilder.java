@@ -10,10 +10,10 @@
  *     Håvard Nørjordet - initial API and implementation
  *******************************************************************************/
 
-package com.maxprograms.bunghole.ai;
+package com.norjordet.bunghole.ai;
 
 import java.util.List;
-import com.maxprograms.bunghole.alignment.AlignmentPair;
+import com.norjordet.bunghole.alignment.AlignmentPair;
 
 /**
  * Builds prompts for Claude AI alignment improvement

@@ -10,7 +10,7 @@
  *     Håvard Nørjordet - initial API and implementation
  *******************************************************************************/
 
-package com.maxprograms.bunghole.ai;
+package com.norjordet.bunghole.ai;
 
 import org.json.JSONObject;
 

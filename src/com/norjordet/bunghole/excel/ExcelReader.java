@@ -10,7 +10,7 @@
  *     Håvard Nørjordet - initial API and implementation
  *******************************************************************************/
 
-package com.maxprograms.bunghole.excel;
+package com.norjordet.bunghole.excel;
 
 import java.io.File;
 import java.io.FileInputStream;

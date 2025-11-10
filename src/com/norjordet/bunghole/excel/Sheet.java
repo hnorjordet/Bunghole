@@ -10,7 +10,7 @@
  *     Håvard Nørjordet - initial API and implementation
  *******************************************************************************/
 
-package com.maxprograms.bunghole.excel;
+package com.norjordet.bunghole.excel;
 
 import java.util.List;
 import java.util.Map;

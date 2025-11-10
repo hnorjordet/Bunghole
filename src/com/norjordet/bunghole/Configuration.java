@@ -10,7 +10,7 @@
  *     Håvard Nørjordet - initial API and implementation
  *******************************************************************************/
 
-package com.maxprograms.bunghole;
+package com.norjordet.bunghole;
 
 import java.io.FileInputStream;
 import java.io.IOException;

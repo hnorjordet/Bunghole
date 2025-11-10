@@ -105,7 +105,7 @@ class Bunghole {
         Bunghole.loadPreferences();
         Bunghole.i18n = new I18n(Bunghole.path.join(app.getAppPath(), 'i18n', 'bunghole_' + Bunghole.appLang + '.json'));
 
-        this.ls = spawn(this.javapath, ['--module-path', 'lib', '-m', 'bunghole/com.maxprograms.bunghole.BungholeServer', '-port', '8040', '-lang', Bunghole.appLang], { cwd: app.getAppPath(), windowsHide: true });
+        this.ls = spawn(this.javapath, ['--module-path', 'lib', '-m', 'bunghole/com.norjordet.bunghole.BungholeServer', '-port', '8040', '-lang', Bunghole.appLang], { cwd: app.getAppPath(), windowsHide: true });
         if (!app.isPackaged) {
             this.ls.stdout.on('data', (data: Buffer | string) => {
                 console.log(data instanceof Buffer ? data.toString() : data);
@@ -114,7 +114,7 @@ class Bunghole {
                 console.error(data instanceof Buffer ? data.toString() : data);
             });
         }
-        execFileSync(this.javapath, ['--module-path', 'lib', '-m', 'bunghole/com.maxprograms.bunghole.CheckURL', 'http://localhost:8040/'], { cwd: app.getAppPath(), windowsHide: true });
+        execFileSync(this.javapath, ['--module-path', 'lib', '-m', 'bunghole/com.norjordet.bunghole.CheckURL', 'http://localhost:8040/'], { cwd: app.getAppPath(), windowsHide: true });
 
         Bunghole.locations = new Locations(Bunghole.path.join(app.getPath('appData'), app.name, 'locations.json'));
         app.on('ready', () => {
@@ -948,11 +948,11 @@ class Bunghole {
     }
 
     static showReleaseHistory(): void {
-        shell.openExternal('https://www.maxprograms.com/products/stgraylog.html');
+        shell.openExternal('https://github.com/hnorjordet/Bunghole/releases');
     }
 
     static showSupportGroup(): void {
-        shell.openExternal('https://groups.io/g/maxprograms/');
+        shell.openExternal('https://github.com/hnorjordet/Bunghole/discussions');
     }
 
     static sendRequest(url: string, json: any, success: Function, error: Function) {

@@ -10,7 +10,7 @@
  *     Håvard Nørjordet - initial API and implementation
  *******************************************************************************/
 
-package com.maxprograms.bunghole.ai;
+package com.norjordet.bunghole.ai;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -27,7 +27,7 @@ import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import com.maxprograms.bunghole.alignment.AlignmentPair;
+import com.norjordet.bunghole.alignment.AlignmentPair;
 
 /**
  * Service for communicating with Claude AI API

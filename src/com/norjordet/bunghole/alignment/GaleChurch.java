@@ -10,7 +10,7 @@
  *     Håvard Nørjordet - initial API and implementation
  *******************************************************************************/
 
-package com.maxprograms.bunghole.alignment;
+package com.norjordet.bunghole.alignment;
 
 import java.util.ArrayList;
 import java.util.Arrays;

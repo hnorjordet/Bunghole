@@ -10,7 +10,7 @@
  *     Håvard Nørjordet - initial API and implementation
  *******************************************************************************/
 
-package com.maxprograms.bunghole.ai;
+package com.norjordet.bunghole.ai;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,8 +19,8 @@ import java.util.List;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import com.maxprograms.bunghole.Configuration;
-import com.maxprograms.bunghole.alignment.AlignmentPair;
+import com.norjordet.bunghole.Configuration;
+import com.norjordet.bunghole.alignment.AlignmentPair;
 
 /**
  * Adapter for ClaudeAIService to implement AIProvider interface

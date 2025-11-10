@@ -10,7 +10,7 @@
  *     Håvard Nørjordet - initial API and implementation
  *******************************************************************************/
 
-package com.maxprograms.bunghole;
+package com.norjordet.bunghole;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,18 +33,18 @@ import com.maxprograms.converters.EncodingResolver;
 import com.maxprograms.converters.FileFormats;
 import com.maxprograms.languages.Language;
 import com.maxprograms.languages.LanguageUtils;
-import com.maxprograms.bunghole.models.Alignment;
+import com.norjordet.bunghole.models.Alignment;
 import com.maxprograms.xml.Document;
 import com.maxprograms.xml.Element;
 import com.maxprograms.xml.SAXBuilder;
 
 // NEW: AI-enhanced alignment imports
-import com.maxprograms.bunghole.alignment.AlignmentEngine;
-import com.maxprograms.bunghole.alignment.AlignmentPair;
-import com.maxprograms.bunghole.alignment.AlignmentResult;
-import com.maxprograms.bunghole.ai.ClaudeAIService;
-import com.maxprograms.bunghole.ai.CostEstimator;
-import com.maxprograms.bunghole.ai.CostEstimator.CostEstimate;
+import com.norjordet.bunghole.alignment.AlignmentEngine;
+import com.norjordet.bunghole.alignment.AlignmentPair;
+import com.norjordet.bunghole.alignment.AlignmentResult;
+import com.norjordet.bunghole.ai.ClaudeAIService;
+import com.norjordet.bunghole.ai.CostEstimator;
+import com.norjordet.bunghole.ai.CostEstimator.CostEstimate;
 
 import org.json.JSONArray;
 import org.json.JSONException;

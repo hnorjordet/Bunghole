@@ -66,6 +66,11 @@ class Bunghole {
     static appLang: string = 'en';
 
     constructor(args: string[]) {
+        // Set app name for macOS menu bar
+        if (process.platform === 'darwin') {
+            app.name = 'Bunghole';
+        }
+
         if (!app.requestSingleInstanceLock()) {
             app.quit();
         } else {

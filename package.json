@@ -24,6 +24,7 @@
     "build": {
         "appId": "com.hnorjordet.bunghole",
         "productName": "Bunghole",
+        "icon": "icons/icon.icns",
         "publish": {
             "provider": "github",
             "owner": "hnorjordet",
@@ -31,6 +32,7 @@
         },
         "mac": {
             "category": "public.app-category.productivity",
+            "icon": "icons/icon.icns",
             "target": [
                 "zip"
             ],
@@ -79,7 +81,7 @@
     },
     "devDependencies": {
         "@types/semver": "^7.7.1",
-        "electron": "^35.0.0",
+        "electron": "^35.7.5",
         "electron-builder": "^26.0.12",
         "typescript": "^5.8.2"
     },

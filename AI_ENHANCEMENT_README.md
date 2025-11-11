@@ -36,7 +36,7 @@ This enhancement adds intelligent alignment capabilities to Bunghole using:
 
 ### Core Alignment
 ```
-src/com/maxprograms/stingray/alignment/
+src/com/bunghole/alignment/
 ├── AlignmentPair.java      - Data structure for aligned pairs
 ├── AlignmentResult.java    - Result with statistics
 ├── AlignmentEngine.java    - Coordinates Gale-Church algorithm
@@ -45,7 +45,7 @@ src/com/maxprograms/stingray/alignment/
 
 ### AI Integration
 ```
-src/com/maxprograms/stingray/ai/
+src/com/bunghole/ai/
 ├── ClaudeAIService.java    - HTTP client for Claude API
 ├── PromptBuilder.java      - Prompt engineering
 └── CostEstimator.java      - Token & cost calculation
@@ -53,7 +53,7 @@ src/com/maxprograms/stingray/ai/
 
 ### Modified Files
 ```
-src/com/maxprograms/stingray/
+src/com/bunghole/
 ├── AlignmentService.java   - Added AI methods
 └── BungholeServer.java     - Added API endpoints
 
@@ -174,7 +174,7 @@ Response: {
 ### Test Gale-Church Algorithm
 ```bash
 # Run with test files
-java -cp "jars/*:lib/*" com.maxprograms.stingray.BungholeServer
+java -cp "jars/*:lib/*" com.bunghole.BungholeServer
 
 # In another terminal, test alignment
 curl -X POST http://localhost:8040/alignFiles \

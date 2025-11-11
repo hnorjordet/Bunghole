@@ -10,7 +10,7 @@
 
 ### Core Functionality
 - [x] Project renamed from Stingray to Bunghole
-- [x] All Java packages updated (`com.maxprograms.bunghole`)
+- [x] All Java packages updated
 - [x] All TypeScript files updated
 - [x] All HTML/CSS references updated
 - [x] JAR file renamed to `bunghole.jar`

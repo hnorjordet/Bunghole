@@ -20,18 +20,6 @@ import { Locations, Point } from "./locations";
 import { MessageTypes } from "./messageTypes";
 import { Updater } from "./updater";
 
-// Set app name for all platforms (especially important for macOS menu bar)
-// Set process title first (this affects the menu bar on macOS)
-if (process && process.title) {
-    process.title = 'Bunghole';
-}
-app.name = 'Bunghole';
-if (app.setName) {
-    app.setName('Bunghole');
-}
-console.log('Process title:', process.title);
-console.log('App name:', app.getName());
-
 class Bunghole {
 
     static path = require('path');
@@ -57,7 +45,7 @@ class Bunghole {
     static locations: Locations;
     currentDefaults: Rectangle;
 
-    javapath: string = Bunghole.path.join(app.getAppPath(), 'bin', 'java');
+    javapath: string;
     ls: ChildProcessWithoutNullStreams;
 
     static currentFile: string;
@@ -78,6 +66,9 @@ class Bunghole {
     static appLang: string = 'en';
 
     constructor(args: string[]) {
+        // Initialize javapath based on platform
+        this.javapath = Bunghole.path.join(app.getAppPath(), 'bin', process.platform === 'win32' ? 'java.exe' : 'java');
+
         if (!app.requestSingleInstanceLock()) {
             app.quit();
         } else {
@@ -100,9 +91,6 @@ class Bunghole {
                 }
             }
         }
-        if (process.platform === 'win32') {
-            this.javapath = Bunghole.path.join(app.getAppPath(), 'bin', 'java.exe');
-        }
         this.loadDefaults();
         Bunghole.loadPreferences();
         Bunghole.i18n = new I18n(Bunghole.path.join(app.getAppPath(), 'i18n', 'bunghole_' + Bunghole.appLang + '.json'));
@@ -120,6 +108,12 @@ class Bunghole {
 
         Bunghole.locations = new Locations(Bunghole.path.join(app.getPath('appData'), app.name, 'locations.json'));
         app.on('ready', () => {
+            // Set app name now that app is ready
+            app.name = 'Bunghole';
+            if (app.setName) {
+                app.setName('Bunghole');
+            }
+
             Bunghole.currentFile = '';
             this.createWindow();
             let filePath = Bunghole.path.join(app.getAppPath(), 'html', Bunghole.appLang, 'index.html');
@@ -2067,6 +2061,8 @@ class Bunghole {
     }
 
 }
+
+// Instantiate the application
 try {
     new Bunghole(process.argv);
 } catch (error) {

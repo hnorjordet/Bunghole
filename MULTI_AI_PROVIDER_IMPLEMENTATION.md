@@ -333,16 +333,16 @@ JSONObject result = provider.analyzeAlignment(
 ## Files Created/Modified
 
 ### New Files
-- `src/com/maxprograms/bunghole/ai/AIProvider.java` - Provider interface
-- `src/com/maxprograms/bunghole/ai/OpenAIService.java` - OpenAI implementation
-- `src/com/maxprograms/bunghole/ai/AIProviderFactory.java` - Factory class
-- `src/com/maxprograms/bunghole/ai/ClaudeAIServiceAdapter.java` - Claude adapter
-- `src/com/maxprograms/bunghole/ai/CostEstimate.java` - Cost estimate class
+- `src/com/bunghole/ai/AIProvider.java` - Provider interface
+- `src/com/bunghole/ai/OpenAIService.java` - OpenAI implementation
+- `src/com/bunghole/ai/AIProviderFactory.java` - Factory class
+- `src/com/bunghole/ai/ClaudeAIServiceAdapter.java` - Claude adapter
+- `src/com/bunghole/ai/CostEstimate.java` - Cost estimate class
 - `AI_PROVIDERS.md` - User documentation
 - `MULTI_AI_PROVIDER_IMPLEMENTATION.md` - This file
 
 ### Modified Files
-- `src/com/maxprograms/bunghole/Configuration.java` - Added OpenAI config methods
+- `src/com/bunghole/Configuration.java` - Added OpenAI config methods
 - `config.properties.example` - Added OpenAI configuration
 
 ## Benefits

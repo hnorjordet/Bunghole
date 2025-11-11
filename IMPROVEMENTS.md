@@ -7,7 +7,7 @@ This document outlines the security improvements and code quality enhancements i
 ## Critical Security Fixes Implemented ✅
 
 ### 1. HTTP Server Localhost Binding
-**File**: [src/com/maxprograms/bunghole/BungholeServer.java](src/com/maxprograms/bunghole/BungholeServer.java#L77)
+**File**: [src/com/bunghole/BungholeServer.java](src/com/bunghole/BungholeServer.java#L77)
 
 **Change**: Server now binds to `127.0.0.1` instead of `0.0.0.0`
 ```java
@@ -21,7 +21,7 @@ server = HttpServer.create(new InetSocketAddress("127.0.0.1", port), 0);
 **Impact**: Prevents remote network access to your alignment API.
 
 ### 2. Input Validation Framework
-**File**: [src/com/maxprograms/bunghole/SecurityUtils.java](src/com/maxprograms/bunghole/SecurityUtils.java)
+**File**: [src/com/bunghole/SecurityUtils.java](src/com/bunghole/SecurityUtils.java)
 
 **Features**:
 - Path traversal attack prevention
@@ -45,7 +45,7 @@ int port = SecurityUtils.validateIntRange(value, 1024, 65535, "port");
 ```
 
 ### 3. Configuration Management System
-**File**: [src/com/maxprograms/bunghole/Configuration.java](src/com/maxprograms/bunghole/Configuration.java)
+**File**: [src/com/bunghole/Configuration.java](src/com/bunghole/Configuration.java)
 
 **Features**:
 - Externalized configuration
@@ -322,7 +322,7 @@ Before deploying to production:
 ## Questions?
 
 For questions about these improvements or to report security issues:
-- Email: tech@maxprograms.com
+- GitHub Issues: Bug reports and feature requests
 - See [SECURITY.md](SECURITY.md) for security reporting
 
 ---

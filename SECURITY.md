@@ -60,7 +60,7 @@ By default, the internal HTTP server binds to `127.0.0.1:8040`, making it access
 
 ## Reporting Security Issues
 
-If you discover a security vulnerability, please email: tech@maxprograms.com
+If you discover a security vulnerability, please report it through the GitHub repository's security advisory feature.
 
 **Do not** open a public issue for security vulnerabilities.
 

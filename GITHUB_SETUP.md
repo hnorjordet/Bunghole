@@ -65,7 +65,7 @@ Add this to your `package.json` inside the `"build"` section:
 
 ```json
 "build": {
-    "appId": "com.maxprograms.bunghole",
+    "appId": "com.bunghole.app",
     "productName": "Bunghole",
     "publish": {
         "provider": "github",
